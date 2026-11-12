@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VON POLL · Wohnungsdatenbank Designstudie</title>
+<style>
+:root{font:16px/1.5 system-ui,sans-serif;color:#14273b;background:#f8f7f3}*{box-sizing:border-box}body{margin:0}.notice{background:#e9dfce;color:#3a3022;text-align:center;padding:.55rem .9rem;font-size:.79rem}header{background:#14273b;color:white;padding:2rem 0 2.3rem}.wrap{width:min(800px,calc(100% - 32px));margin:auto}.brand{display:flex;align-items:center;gap:10px;color:#e3c58e;font:1rem Georgia,serif;letter-spacing:.16em}.brand svg{width:35px;height:35px}h1{font:400 clamp(2.1rem,7vw,3.75rem)/1.05 Georgia,serif;margin:.9rem 0 .5rem}header p{margin:0;color:#dae4ec}main{padding:1.5rem 0 3rem}.controls{display:flex;flex-wrap:wrap;gap:.6rem;align-items:end}label{display:grid;gap:.3rem;font-size:.82rem;font-weight:650}.query{flex:2 1 200px}.kind{flex:1 1 118px}input,select,button{border:1px solid #aeb8be;border-radius:4px;background:white;font:inherit;color:inherit;min-height:42px;padding:.4rem .55rem;min-width:0}button{cursor:pointer}button[aria-pressed=true]{background:#14273b;color:#fff}.cards{display:grid;gap:.6rem}article{background:white;border:1px solid #deddd5;border-radius:4px;padding:1rem;display:grid;grid-template-columns:1fr auto;gap:.3rem .8rem;align-items:start}article p,h2{margin:0}article p{color:#526170;font-size:.86rem}h2{font:400 1.45rem Georgia,serif}article button{grid-column:2;grid-row:1 / 4;align-self:center}footer{border-top:1px solid #deddd5;padding:1rem 0;color:#526170;font-size:.8rem}:focus-visible{outline:2px solid #936832;outline-offset:2px}
+</style></head><body>
+<div class="notice">Unabhängige Designstudie · Keine offizielle App von VON POLL IMMOBILIEN</div>
+<header><div class="wrap"><div class="brand"><img src="data:image/svg+xml;base64,LOGO_BASE64" alt="" width="35" height="35">VON POLL · DEMO</div><h1>Wohnungsdatenbank</h1><p>Beispielangebote finden und lokal merken.</p></div></header>
+<main class="wrap">
+<div class="controls">
+<label class="query">Ort, PLZ oder Stadtteil<input type="search" id="query" placeholder="z. B. Frankfurt" autocomplete="off"></label>
+<label class="kind">Angebotsart<select id="kind"><option>Alle</option><option>Mieten</option><option>Kaufen</option></select></label>
+<button type="button" id="show-saved" aria-pressed="false">Merkliste</button>
+</div>
+<p id="status" role="status"></p><div class="cards" id="cards"></div><noscript>Bitte aktivieren Sie JavaScript, um die Beispielangebote zu durchsuchen.</noscript>
+</main>
+<footer><div class="wrap">Alle Inserate sind frei erfundene Beispiele. Die Datei funktioniert ohne Netzwerkzugriff.</div></footer>
+<script>
+/* LISTINGS */
+const q=document.querySelector('#query'), kind=document.querySelector('#kind'), show=document.querySelector('#show-saved'), cards=document.querySelector('#cards');
+const key='hainer-favorites';
+let saved=new Set();
+try {const ids=JSON.parse(localStorage.getItem(key)); if(Array.isArray(ids)) saved=new Set(ids);} catch {}
+const format=new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const norm=s=>s.toLocaleLowerCase('de-DE').normalize('NFD').replace(/\p{Diacritic}/gu,'').replaceAll('ß','ss');
+function draw(){
+ const items=listings.filter(i=>(show.getAttribute('aria-pressed')==='false'||saved.has(i.id))&&(kind.value==='Alle'||i.type===kind.value)&&norm([i.city,i.zip,i.district,i.title].join(' ')).includes(norm(q.value.trim())));
+ document.querySelector('#status').textContent=items.length===0?'Keine passenden Angebote.':items.length+(items.length===1?' Beispielangebot':' Beispielangebote');
+ cards.replaceChildren();
+ for(const i of items){
+  const article=document.createElement('article'), place=document.createElement('p'), title=document.createElement('h2'), detail=document.createElement('p'), save=document.createElement('button');
+  place.textContent=i.city+' · '+i.district+' · '+i.type;
+  title.textContent=i.title;
+  detail.textContent=i.size+' m² · '+i.rooms+' Zimmer · '+format.format(i.price)+(i.type==='Mieten'?' / Monat':'');
+  save.type='button'; save.dataset.id=i.id; save.textContent=saved.has(i.id)?'Gemerkt':'Merken'; save.setAttribute('aria-pressed',saved.has(i.id)); save.setAttribute('aria-label',i.title+' merken');
+  article.append(place,title,detail,save);cards.append(article);
+ }
+}
+q.addEventListener('input',draw);kind.addEventListener('change',draw);
+show.addEventListener('click',()=>{show.setAttribute('aria-pressed',show.getAttribute('aria-pressed')==='false');draw()});
+cards.addEventListener('click',e=>{
+ const save=e.target.closest('[data-id]');if(!save)return;
+ const id=Number(save.dataset.id);if(saved.has(id))saved.delete(id);else saved.add(id);
+ try{localStorage.setItem(key,JSON.stringify([...saved]));}catch{}
+ draw();(cards.querySelector('[data-id="'+id+'"]')||show).focus({preventScroll:true});
+});
+draw();
+</script></body></html>

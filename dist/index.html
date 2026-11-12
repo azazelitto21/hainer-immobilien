@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Entdecken Sie Miet- und Kaufangebote und die digitale Wohnungsdatenbank von VON POLL IMMOBILIEN.">
+  <meta name="theme-color" content="#14273b">
+  <title>VON POLL IMMOBILIEN · Besondere Immobilien. Beste Lagen.</title>
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="listings.js" defer></script>
+  <script src="site.js" defer></script>
+</head>
+<body>
+<svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11s-8-6-8-11a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.8a5 5 0 0 0-7 0L12 6.6l-1.8-1.8a5 5 0 0 0-7 7L12 21l8.8-9.2a5 5 0 0 0 0-7Z"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+<a class="skip" href="#angebote">Zu den Angeboten</a>
+<div class="concept">Unabhängige Designstudie · Keine offizielle Seite von VON POLL IMMOBILIEN · <a href="https://www.von-poll.com/de">Zum Original</a></div>
+<header class="header" id="start">
+  <div class="shell header-inner">
+    <a class="brand" href="#start" aria-label="VON POLL IMMOBILIEN · Startseite"><img src="assets/mark.svg" alt="" width="41" height="41"><span>VON POLL<small>IMMOBILIEN</small></span></a>
+    <nav aria-label="Hauptnavigation"><a href="#angebote" data-filter="Mieten">Mieten</a><a href="#angebote" data-filter="Kaufen">Kaufen</a><a href="#angebote" data-filter="Alle">Immobilien</a></nav>
+    <div class="header-actions"><button type="button" class="saved-link" id="saved" aria-label="Merkliste öffnen" aria-pressed="false"><svg><use href="#i-heart"/></svg><span id="saved-count">0</span></button><a class="header-app" href="#wohnungsdatenbank"><svg><use href="#i-download"/></svg><span>Wohnungsdatenbank</span></a></div>
+  </div>
+</header>
+<main>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="shell hero-inner">
+      <p class="eyebrow"><span></span> IMMOBILIEN MIT CHARAKTER</p>
+      <h1 id="hero-title">Besondere Immobilien.<br>Beste Lagen.</h1>
+      <p class="hero-copy">Finden Sie Ihr neues Zuhause in Deutschlands schönsten Städten.</p>
+      <form id="search" class="search" role="search">
+        <label class="search-kind"><span>Ich möchte</span><select id="search-kind" aria-label="Angebotsart"><option>Mieten</option><option>Kaufen</option><option>Alle</option></select><svg><use href="#i-chevron"/></svg></label>
+        <label class="search-location"><svg><use href="#i-pin"/></svg><span class="sr">Stadt oder Stadtteil</span><input id="search-query" type="search" placeholder="Stadt, PLZ oder Stadtteil" autocomplete="off"></label>
+        <button type="submit"><svg><use href="#i-search"/></svg>Suchen</button>
+      </form>
+    </div>
+    <div class="hero-index"><span></span> ARCHITEKTUR &amp; WOHNEN</div>
+  </section>
+  <aside class="announcement" aria-label="Neue Wohnungsdatenbank">
+    <div class="shell announcement-inner">
+      <div class="announcement-icon"><svg><use href="#i-download"/></svg></div>
+      <div class="announcement-text"><p><span>NEU</span> Die Wohnungsdatenbank als Demo.</p><small>Entdecken und merken Sie Wohnungen auch in der App.</small></div>
+      <a class="button gold" href="wohnungsdatenbank.html" download="Wohnungsdatenbank-Designstudie.html">Demo-App herunterladen <svg><use href="#i-right"/></svg></a>
+    </div>
+  </aside>
+  <section class="section shell" id="angebote" aria-labelledby="offer-title">
+    <p class="eyebrow"><span></span> IMMOBILIENANGEBOTE</p>
+    <div class="section-heading"><div><h2 id="offer-title">Ausgewählte Immobilien</h2><p>Vom Stadtapartment bis zum Haus im Grünen.</p></div>
+      <div class="filters" aria-label="Angebote filtern"><button type="button" data-filter="Alle" aria-pressed="true">Alle</button><button type="button" data-filter="Mieten" aria-pressed="false">Mieten</button><button type="button" data-filter="Kaufen" aria-pressed="false">Kaufen</button></div>
+    </div>
+    <p class="results-meta" id="results-meta" role="status"></p>
+    <div id="cards" class="cards"></div>
+    <button id="clear" type="button" class="button outline" hidden>Filter zurücksetzen</button>
+    <noscript>Bitte aktivieren Sie JavaScript, um die Beispielangebote zu durchsuchen.</noscript>
+  </section>
+  <section class="app-section" id="wohnungsdatenbank" aria-labelledby="app-title">
+    <div class="shell app-inner">
+      <div>
+        <p class="eyebrow"><span></span> NEU · DIGITALER KATALOG</p>
+        <h2 id="app-title">Ihre Wohnungssuche.<br>Auch unterwegs.</h2>
+        <p>Mit der VON POLL Wohnungsdatenbank finden Sie Beispielangebote nach Ort und Angebotsart und speichern Ihre Favoriten direkt im Browser.</p>
+        <div class="app-actions"><a class="button gold" href="wohnungsdatenbank.html"><svg><use href="#i-right"/></svg> App öffnen</a><a class="button app-download" href="wohnungsdatenbank.html" download="Wohnungsdatenbank-Designstudie.html"><svg><use href="#i-download"/></svg> Demo herunterladen</a></div>
+        <small class="app-note">Die Demo ist eine HTML-Datei und lässt sich offline im Browser öffnen.</small>
+      </div>
+      <div class="app-visual" aria-hidden="true"><div class="phone"><div class="phone-notch"></div><div class="phone-brand"><img src="assets/mark.svg" alt=""> VON POLL</div><div class="phone-label">WOHNUNGSDATENBANK</div><div class="phone-search"><svg><use href="#i-search"/></svg> Stadt oder Stadtteil</div><div class="phone-photo"></div><div class="phone-card"><b>Altbau am Holzhausenpark</b><small>Frankfurt am Main · 3 Zimmer</small></div></div></div>
+    </div>
+  </section>
+</main>
+<footer><div class="shell footer-inner"><a class="brand" href="#start"><img src="assets/mark.svg" alt="" width="37" height="37"><span>VON POLL<small>IMMOBILIEN</small></span></a><p>Unabhängige Designstudie · Alle Angebote sind Beispiele.</p><a href="#start" class="top-link">Nach oben ↑</a></div></footer>
+<dialog id="details"><form method="dialog"><button aria-label="Details schließen">×</button></form><div id="details-body"></div></dialog>
+</body>
+</html>

@@ -11,3 +11,22 @@ dialog{border:0;border-radius:5px;color:var(--ink);padding:0;width:min(555px,cal
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
 .brand img,.phone-brand img{background:#14273b;border:4px solid #14273b;border-radius:2px}
+
+.search-app-dialog .detail-info {
+  padding: 28px;
+}
+.search-app-dialog h2 {
+  padding-right: 32px;
+}
+.search-app-dialog p {
+  color: var(--muted);
+}
+.search-app-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.search-app-actions .outline {
+  margin-top: 0;
+}

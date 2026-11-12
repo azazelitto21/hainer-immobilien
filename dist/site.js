@@ -5,6 +5,7 @@ const query = document.querySelector('#search-query');
 const filters = [...document.querySelectorAll('[data-filter]')];
 const savedButton = document.querySelector('#saved');
 const dialog = document.querySelector('#details');
+const searchAppDialog = document.querySelector('#search-app');
 const savedKey = 'hainer-favorites';
 let saved = new Set();
 try {
@@ -13,15 +14,12 @@ try {
 } catch {}
 let onlySaved = false;
 let type = 'Alle';
-let search = '';
 
 const icon = name => '<svg aria-hidden="true"><use href="#i-' + name + '"/></svg>';
 const price = item => new Intl.NumberFormat('de-DE', {style:'currency', currency:'EUR', maximumFractionDigits:0}).format(item.price) + (item.type === 'Mieten' ? ' / Monat' : '');
-const normalize = s => s.toLocaleLowerCase('de-DE').normalize('NFD').replace(/\p{Diacritic}/gu, '').replaceAll('ß', 'ss');
 function render() {
   const visible = listings.filter(i => (!onlySaved || saved.has(i.id)) &&
-    (type === 'Alle' || i.type === type) &&
-    normalize([i.city, i.district, i.zip, i.title].join(' ')).includes(normalize(search)));
+    (type === 'Alle' || i.type === type));
   cards.innerHTML = visible.map(i => `<article class="card">
     <div class="card-media photo-${i.photo}" role="img" aria-label="${i.title}"></div>
     <span class="card-tag">${i.type === 'Mieten' ? 'ZUR MIETE' : 'ZUM KAUF'}</span>
@@ -35,7 +33,7 @@ function render() {
     (visible.length === 0 ? 'Keine passenden Angebote gefunden.' : visible.length + (visible.length === 1 ? ' Beispielangebot' : ' Beispielangebote'));
   document.querySelector('#saved-count').textContent = saved.size;
   savedButton.setAttribute('aria-pressed', onlySaved);
-  document.querySelector('#clear').hidden = !onlySaved && type === 'Alle' && !search;
+  document.querySelector('#clear').hidden = !onlySaved && type === 'Alle';
   filters.forEach(b => { if (b.matches('button')) b.setAttribute('aria-pressed', !onlySaved && b.dataset.filter === type); });
 }
 function setType(value) {
@@ -45,27 +43,30 @@ function setType(value) {
 }
 form.addEventListener('submit', e => {
   e.preventDefault();
+  if (query.value.trim()) {
+    searchAppDialog.showModal();
+    return;
+  }
   setType(kind.value);
-  search = query.value.trim();
   render();
   document.querySelector('#angebote').scrollIntoView();
 });
 filters.forEach(b => b.addEventListener('click', () => {
   setType(b.dataset.filter);
-  if (b.matches('a')) search = query.value = '';
+  if (b.matches('a')) query.value = '';
   render();
 }));
 savedButton.addEventListener('click', () => {
   const next = !onlySaved;
   setType('Alle');
   onlySaved = next;
-  search = query.value = '';
+  query.value = '';
   render();
   document.querySelector('#angebote').scrollIntoView();
 });
 document.querySelector('#clear').addEventListener('click', () => {
   setType('Alle');
-  search = query.value = '';
+  query.value = '';
   render();
   document.querySelector('#angebote').scrollIntoView();
 });
@@ -87,4 +88,7 @@ cards.addEventListener('click', e => {
   }
 });
 dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+searchAppDialog.addEventListener('click', e => {
+  if (e.target === searchAppDialog) searchAppDialog.close();
+});
 render();

@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#14273b">
   <title>VON POLL IMMOBILIEN · Besondere Immobilien. Beste Lagen.</title>
   <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
   <script src="listings.js" defer></script>
-  <script src="site.js" defer></script>
+  <script src="site.js?v=2" defer></script>
 </head>
 <body>
 <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -20,13 +20,13 @@
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.8a5 5 0 0 0-7 0L12 6.6l-1.8-1.8a5 5 0 0 0-7 7L12 21l8.8-9.2a5 5 0 0 0 0-7Z"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
 </svg>
-<a class="skip" href="#angebote">Zu den Angeboten</a>
-<div class="concept">Unabhängiger Immobilienkatalog · <a href="https://www.von-poll.com/de">Zum Original</a></div>
+<button type="button" data-app-gate class="skip">Zu den Angeboten</button>
+<div class="concept">Unabhängiger Immobilienkatalog</div>
 <header class="header" id="start">
   <div class="shell header-inner">
-    <a class="brand" href="#start" aria-label="VON POLL IMMOBILIEN · Startseite"><img src="assets/mark.svg" alt="" width="41" height="41"><span>VON POLL<small>IMMOBILIEN</small></span></a>
-    <nav aria-label="Hauptnavigation"><a href="#angebote" data-filter="Mieten">Mieten</a><a href="#angebote" data-filter="Kaufen">Kaufen</a><a href="#angebote" data-filter="Alle">Immobilien</a></nav>
-    <div class="header-actions"><button type="button" class="saved-link" id="saved" aria-label="Merkliste öffnen" aria-pressed="false"><svg><use href="#i-heart"/></svg><span id="saved-count">0</span></button><a class="header-app" href="#wohnungsdatenbank"><svg><use href="#i-download"/></svg><span>Wohnungsdatenbank</span></a></div>
+    <button type="button" data-app-gate class="brand" aria-label="VON POLL IMMOBILIEN · Startseite"><img src="assets/mark.svg" alt="" width="41" height="41"><span>VON POLL<small>IMMOBILIEN</small></span></button>
+    <nav aria-label="Hauptnavigation"><button type="button" data-app-gate>Mieten</button><button type="button" data-app-gate>Kaufen</button><button type="button" data-app-gate>Immobilien</button></nav>
+    <div class="header-actions"><button type="button" class="saved-link" data-app-gate aria-label="Merkliste öffnen"><svg><use href="#i-heart"/></svg></button><button type="button" data-app-gate class="header-app"><svg><use href="#i-download"/></svg><span>Wohnungsdatenbank</span></button></div>
   </div>
 </header>
 <main>
@@ -47,17 +47,16 @@
     <div class="shell announcement-inner">
       <div class="announcement-icon"><svg><use href="#i-download"/></svg></div>
       <div class="announcement-text"><p><span>NEU</span> Die Wohnungsdatenbank ist verfügbar.</p><small>Entdecken und merken Sie Wohnungen auch in der App.</small></div>
-      <a class="button gold" href="wohnungsdatenbank.html" download="Wohnungsdatenbank.html">App herunterladen <svg><use href="#i-right"/></svg></a>
+      <button type="button" data-app-gate class="button gold">App herunterladen <svg><use href="#i-right"/></svg></button>
     </div>
   </aside>
   <section class="section shell" id="angebote" aria-labelledby="offer-title">
     <p class="eyebrow"><span></span> IMMOBILIENANGEBOTE</p>
     <div class="section-heading"><div><h2 id="offer-title">Ausgewählte Immobilien</h2><p>Vom Stadtapartment bis zum Haus im Grünen.</p></div>
-      <div class="filters" aria-label="Angebote filtern"><button type="button" data-filter="Alle" aria-pressed="true">Alle</button><button type="button" data-filter="Mieten" aria-pressed="false">Mieten</button><button type="button" data-filter="Kaufen" aria-pressed="false">Kaufen</button></div>
+      <div class="filters" aria-label="Angebote filtern"><button type="button" data-app-gate>Alle</button><button type="button" data-app-gate>Mieten</button><button type="button" data-app-gate>Kaufen</button></div>
     </div>
     <p class="results-meta" id="results-meta" role="status"></p>
     <div id="cards" class="cards"></div>
-    <button id="clear" type="button" class="button outline" hidden>Filter zurücksetzen</button>
     <noscript>Bitte aktivieren Sie JavaScript, um die Angebote zu durchsuchen.</noscript>
   </section>
   <section class="app-section" id="wohnungsdatenbank" aria-labelledby="app-title">
@@ -66,15 +65,14 @@
         <p class="eyebrow"><span></span> NEU · DIGITALER KATALOG</p>
         <h2 id="app-title">Ihre Wohnungssuche.<br>Auch unterwegs.</h2>
         <p>Mit der VON POLL Wohnungsdatenbank finden Sie Angebote nach Ort und Angebotsart und speichern Ihre Favoriten direkt im Browser.</p>
-        <div class="app-actions"><a class="button gold" href="wohnungsdatenbank.html"><svg><use href="#i-right"/></svg> App öffnen</a><a class="button app-download" href="wohnungsdatenbank.html" download="Wohnungsdatenbank.html"><svg><use href="#i-download"/></svg> App herunterladen</a></div>
+        <div class="app-actions"><button type="button" data-app-gate class="button app-download"><svg><use href="#i-download"/></svg> App herunterladen</button></div>
         <small class="app-note">Die HTML-Datei lässt sich offline im Browser öffnen.</small>
       </div>
       <div class="app-visual" aria-hidden="true"><div class="phone"><div class="phone-notch"></div><div class="phone-brand"><img src="assets/mark.svg" alt=""> VON POLL</div><div class="phone-label">WOHNUNGSDATENBANK</div><div class="phone-search"><svg><use href="#i-search"/></svg> Stadt oder Stadtteil</div><div class="phone-photo"></div><div class="phone-card"><b>Altbau am Holzhausenpark</b><small>Frankfurt am Main · 3 Zimmer</small></div></div></div>
     </div>
   </section>
 </main>
-<footer><div class="shell footer-inner"><a class="brand" href="#start"><img src="assets/mark.svg" alt="" width="37" height="37"><span>VON POLL<small>IMMOBILIEN</small></span></a><p>Die Inserate sind frei erfunden.</p><a href="#start" class="top-link">Nach oben ↑</a></div></footer>
-<dialog id="details"><form method="dialog"><button aria-label="Details schließen">×</button></form><div id="details-body"></div></dialog>
+<footer><div class="shell footer-inner"><button type="button" data-app-gate class="brand"><img src="assets/mark.svg" alt="" width="37" height="37"><span>VON POLL<small>IMMOBILIEN</small></span></button><p>Die Inserate sind frei erfunden.</p><button type="button" data-app-gate class="top-link">Nach oben ↑</button></div></footer>
 <dialog id="search-app" class="search-app-dialog" aria-labelledby="search-app-title" aria-describedby="search-app-description">
   <form method="dialog"><button aria-label="Fenster schließen">×</button></form>
   <div class="detail-info">

@@ -30,7 +30,7 @@ function render() {
     <div class="card-bottom"><strong>${price(i)}</strong><button type="button" data-detail="${i.id}" aria-label="Details: ${i.title}">${icon('right')}</button></div></div>
   </article>`).join('');
   document.querySelector('#results-meta').textContent = (onlySaved ? 'Merkliste · ' : '') +
-    (visible.length === 0 ? 'Keine passenden Angebote gefunden.' : visible.length + (visible.length === 1 ? ' Beispielangebot' : ' Beispielangebote'));
+    (visible.length === 0 ? 'Keine passenden Angebote gefunden.' : visible.length + (visible.length === 1 ? ' Angebot' : ' Angebote'));
   document.querySelector('#saved-count').textContent = saved.size;
   savedButton.setAttribute('aria-pressed', onlySaved);
   document.querySelector('#clear').hidden = !onlySaved && type === 'Alle';
@@ -82,7 +82,7 @@ cards.addEventListener('click', e => {
   const detail = e.target.closest('[data-detail]');
   if (detail) {
     const i = listings.find(i => i.id === Number(detail.dataset.detail));
-    document.querySelector('#details-body').innerHTML = `<div class="detail-media photo-${i.photo}"></div><div class="detail-info"><p class="eyebrow">${i.city} · ${i.district}</p><h2 id="detail-title">${i.title}</h2><p>${i.description}</p><p>${i.size} m² · ${i.rooms} Zimmer · ${price(i)}</p><small>Beispielangebot</small></div>`;
+    document.querySelector('#details-body').innerHTML = `<div class="detail-media photo-${i.photo}"></div><div class="detail-info"><p class="eyebrow">${i.city} · ${i.district}</p><h2 id="detail-title">${i.title}</h2><p>${i.description}</p><p>${i.size} m² · ${i.rooms} Zimmer · ${price(i)}</p></div>`;
     dialog.setAttribute('aria-labelledby', 'detail-title');
     dialog.showModal();
   }

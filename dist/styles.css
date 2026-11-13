@@ -27,6 +27,3 @@ dialog{border:0;border-radius:5px;color:var(--ink);padding:0;width:min(555px,cal
   gap: 10px;
   margin-top: 22px;
 }
-.search-app-actions .outline {
-  margin-top: 0;
-}

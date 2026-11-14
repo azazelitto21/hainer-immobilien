@@ -3,32 +3,81 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Die Wohnungsdatenbank für Ihre Mietwohnungssuche in Köln.">
+  <meta name="description" content="Mietwohnungen in Köln. Erfahren Sie mehr über die Wohnungsdatenbank und die Kölner Veedel.">
   <meta name="theme-color" content="#14273b">
   <title>Wohnungsdatenbank · Mietwohnungen in Köln</title>
-  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css?v=4">
+  <script src="/site.js" defer></script>
 </head>
 <body>
   <header class="site-header">
     <div class="shell header-inner">
       <div class="brand">
-        <img src="assets/mark.svg" width="42" height="42" alt="">
+        <img src="/assets/mark.svg" width="42" height="42" alt="">
         <span>VON POLL<small>IMMOBILIEN</small></span>
       </div>
-      <p class="header-label">Wohnungsdatenbank</p>
+      <button type="button" class="download header-download" data-open-app aria-haspopup="dialog">APP HERUNTERLADEN</button>
     </div>
   </header>
-  <main class="hero">
-    <div class="shell hero-inner">
-      <h1>Mietwohnungen<br>in Köln entdecken.</h1>
-      <p class="hero-copy">Die Wohnungsdatenbank für Ihre Suche nach einem neuen Zuhause in Köln.</p>
-      <button class="download" type="button" disabled aria-describedby="download-status">APP HERUNTERLADEN</button>
-      <p class="download-status" id="download-status">Der Download ist noch nicht verfügbar.</p>
-    </div>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="shell hero-inner">
+        <h1 id="hero-title">Mietwohnungen<br>in Köln entdecken.</h1>
+        <p class="hero-copy">Suchen Sie nach einem Stadtteil oder einer Postleitzahl. Die Wohnungsangebote finden Sie in der App.</p>
+        <form class="search" id="search" role="search">
+          <label for="location">Stadtteil oder Postleitzahl</label>
+          <div class="search-row">
+            <input id="location" type="search" placeholder="z. B. Ehrenfeld oder 50823" autocomplete="off">
+            <button type="submit" class="search-submit">Suchen</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="shell neighborhoods" aria-labelledby="neighborhood-title">
+      <h2 id="neighborhood-title">Welches Veedel passt zu Ihnen?</h2>
+      <p class="section-intro">Drei Kölner Stadtteile als Ausgangspunkt für Ihre Wohnungssuche.</p>
+      <div class="neighborhood-grid">
+        <article>
+          <h3>Ehrenfeld</h3>
+          <p>Rund um die Venloer Straße prägen kleine Läden, Cafés und Kulturorte das Viertel.</p>
+        </article>
+        <article>
+          <h3>Sülz</h3>
+          <p>Wohnstraßen, Nachbarschaftsläden und die Nähe zum Beethovenpark.</p>
+        </article>
+        <article>
+          <h3>Deutz</h3>
+          <p>Auf der rechten Rheinseite, mit Rheinufer und Blick auf die Altstadt.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="app-section" aria-labelledby="app-title">
+      <div class="shell app-layout">
+        <div>
+          <h2 id="app-title">Die Wohnungsdatenbank<br>für Köln</h2>
+          <p>In der App suchen Sie nach Mietwohnungen in Ihrem Wunschviertel. Auf der Website können Sie sich vorab über die Stadtteile informieren.</p>
+        </div>
+        <button type="button" class="download" data-open-app aria-haspopup="dialog">APP HERUNTERLADEN</button>
+      </div>
+    </section>
   </main>
+
   <footer class="site-footer">
-    <div class="shell">Unabhängiges Projekt</div>
+    <div class="shell">Unabhängiges Projekt · Köln</div>
   </footer>
+
+  <dialog id="app-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+    <form method="dialog">
+      <button class="close-dialog" aria-label="Fenster schließen">×</button>
+    </form>
+    <h2 id="dialog-title">Wohnungssuche in der App</h2>
+    <p id="dialog-description">Für die Suche nach Mietwohnungen in Köln benötigen Sie die App.</p>
+    <button class="download" type="button" disabled aria-describedby="download-status">APP HERUNTERLADEN</button>
+    <p class="download-status" id="download-status">Der Download ist noch nicht verfügbar.</p>
+  </dialog>
 </body>
 </html>

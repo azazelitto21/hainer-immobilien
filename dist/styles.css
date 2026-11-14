@@ -128,22 +128,8 @@ h1 {
   height: clamp(96px, 13vw, 164px);
   object-fit: contain;
 }
-.footer-links, .footer-bottom { background: #0e1e30; }
-.footer-links nav {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px clamp(14px, 3vw, 38px);
-  padding-block: 25px;
-}
-.footer-links a {
-  color: inherit;
-  font-weight: 650;
-  text-decoration: none;
-}
-.footer-links a:hover { text-decoration: underline; }
 .footer-bottom {
+  background: #0e1e30;
   padding-block: 20px;
   border-top: 1px solid #ffffff36;
   color: #d9e3ec;
@@ -157,7 +143,6 @@ h1 {
 @media (max-width: 420px) {
   .footer-medals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footer-medals img { height: 118px; }
-  .footer-links nav { gap: 10px 16px; font-size: .875rem; }
 }
 @media (max-width: 640px) {
   .shell { width: calc(100% - 32px); }

@@ -89,25 +89,75 @@ h1 {
 }
 .download-status { margin-top: 10px; color: #e6e9ed; font-size: .875rem; }
 .site-footer {
-  background: #0e1e30;
+  background: #14273b;
   color: #fff;
 }
-.footer-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px 32px;
-  padding-block: 34px;
+.footer-awards { padding-block: 30px 38px; }
+.footer-attribution {
+  margin-bottom: 22px;
+  color: #d9e3ec;
+  text-align: center;
+  font-size: .875rem;
 }
-.footer-main p { color: #e6e9ed; }
-.footer-main .download { margin: 0; }
+.footer-awards-grid {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(0, 4fr) minmax(100px, 1fr);
+  align-items: center;
+  gap: clamp(16px, 3vw, 40px);
+}
+.footer-partners {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+.footer-partners img {
+  width: min(100%, 138px);
+  height: 47px;
+  object-fit: contain;
+}
+.footer-medals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-items: center;
+  align-items: center;
+  gap: clamp(8px, 2vw, 24px);
+}
+.footer-medals img {
+  width: 100%;
+  max-width: 148px;
+  height: clamp(96px, 13vw, 164px);
+  object-fit: contain;
+}
+.footer-links, .footer-bottom { background: #0e1e30; }
+.footer-links nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px clamp(14px, 3vw, 38px);
+  padding-block: 25px;
+}
+.footer-links a {
+  color: inherit;
+  font-weight: 650;
+  text-decoration: none;
+}
+.footer-links a:hover { text-decoration: underline; }
 .footer-bottom {
   padding-block: 20px;
   border-top: 1px solid #ffffff36;
-  color: #c8d5e1;
+  color: #d9e3ec;
   text-align: center;
   font-size: .875rem;
+}
+@media (max-width: 820px) {
+  .footer-awards-grid { grid-template-columns: 1fr 1fr; }
+  .footer-medals { grid-column: 1 / -1; grid-row: 1; }
+}
+@media (max-width: 420px) {
+  .footer-medals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .footer-medals img { height: 118px; }
+  .footer-links nav { gap: 10px 16px; font-size: .875rem; }
 }
 @media (max-width: 640px) {
   .shell { width: calc(100% - 32px); }

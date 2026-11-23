@@ -1,6 +1,6 @@
 const appDialog = document.querySelector('#app-dialog');
 
-document.querySelector('#search').addEventListener('submit', event => {
+document.querySelector('#search')?.addEventListener('submit', event => {
   event.preventDefault();
   appDialog.showModal();
 });

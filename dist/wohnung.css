@@ -1,0 +1,83 @@
+.listing-home {
+  color: var(--navy);
+  font: 400 1.45rem/1.2 Georgia, serif;
+  text-decoration: none;
+}
+.listing-home:hover { text-decoration: underline; }
+.listing { padding-block: clamp(28px, 6vw, 66px); }
+.listing-location {
+  margin-bottom: 12px;
+  color: #546475;
+  font-weight: 650;
+}
+.listing-heading h1 { font-size: clamp(2.05rem, 5.4vw, 4.15rem); }
+.listing-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(270px, 1fr);
+  align-items: start;
+  gap: clamp(18px, 3vw, 38px);
+  margin-top: 26px;
+}
+.listing-photo {
+  display: grid;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #e9e5dc;
+}
+.listing-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+.photo-picker {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 4px 11px;
+  margin: 8px -4px 0;
+}
+.photo-picker button {
+  flex: 0 0 76px;
+  height: 58px;
+  padding: 2px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+}
+.photo-picker button[aria-pressed="true"] { border-color: var(--navy); }
+.photo-picker img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  object-fit: cover;
+}
+.listing-card {
+  padding: clamp(20px, 3vw, 29px);
+  border: 1px solid #e1ded6;
+  border-top: 3px solid var(--gold);
+  border-radius: 4px;
+  background: #fff;
+}
+.listing-price { font: 400 2.75rem/1.1 Georgia, serif; }
+.listing-price-label, .listing-status { color: #546475; }
+.listing-facts { margin: 20px 0; }
+.listing-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 10px;
+  border-top: 1px solid #e1ded6;
+}
+.listing-facts dd { margin: 0; font-weight: 650; text-align: right; }
+.viewing-button { width: 100%; margin-top: 0; font-size: .95rem; letter-spacing: normal; }
+.listing-status { margin-top: 14px; font-size: .875rem; }
+.listing-description { max-width: 44rem; margin-top: clamp(28px, 6vw, 58px); }
+.listing-description p { margin-top: 14px; }
+@media (max-width: 760px) {
+  .listing-grid { grid-template-columns: minmax(0, 1fr); }
+}

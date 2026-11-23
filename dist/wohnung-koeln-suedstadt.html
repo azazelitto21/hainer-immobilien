@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Exposé einer 38 m² großen 1-Zimmer-Wohnung im Kölner Severinsviertel. Angaben aus dem Inserat vom 27. Februar 2026.">
+  <meta name="theme-color" content="#14273b">
+  <title>1-Zimmer-Wohnung in Köln-Südstadt · Exposé</title>
+  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="wohnung.css">
+  <script src="site.js?v=2" defer></script>
+  <script src="wohnung.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="listing-home" href="index.html">Wohnungsdatenbank Köln</a>
+    </div>
+  </header>
+
+  <main class="shell listing">
+    <div class="listing-heading">
+      <p class="listing-location">50678 Köln · Südstadt / Severinsviertel</p>
+      <h1>1-Zimmer-Wohnung in Köln-Südstadt</h1>
+    </div>
+
+    <div class="listing-grid">
+      <section class="listing-gallery" aria-label="Wohnungsfotos">
+        <div class="listing-photo">
+          <img id="listing-photo" src="assets/suedstadt/image12.webp" alt="Wohn- und Schlafraum" fetchpriority="high">
+        </div>
+        <div class="photo-picker" role="group" aria-label="Foto auswählen">
+          <button type="button" aria-label="Wohn- und Schlafraum" aria-pressed="true"><img src="assets/suedstadt/image12.webp" alt=""></button>
+          <button type="button" aria-label="Einbauküche" aria-pressed="false"><img src="assets/suedstadt/image02.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Balkon" aria-pressed="false"><img src="assets/suedstadt/image10.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Sitzecke" aria-pressed="false"><img src="assets/suedstadt/image04.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Badezimmer" aria-pressed="false"><img src="assets/suedstadt/image06.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Balkontür" aria-pressed="false"><img src="assets/suedstadt/image01.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Blick in den Wohnraum" aria-pressed="false"><img src="assets/suedstadt/image03.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Garderobe im Flur" aria-pressed="false"><img src="assets/suedstadt/image05.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Schlafbereich" aria-pressed="false"><img src="assets/suedstadt/image07.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Waschmaschine im Bad" aria-pressed="false"><img src="assets/suedstadt/image08.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Schränke im Wohnraum" aria-pressed="false"><img src="assets/suedstadt/image09.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Essplatz" aria-pressed="false"><img src="assets/suedstadt/image11.webp" alt="" loading="lazy"></button>
+          <button type="button" aria-label="Küche mit Balkontür" aria-pressed="false"><img src="assets/suedstadt/image13.webp" alt="" loading="lazy"></button>
+        </div>
+      </section>
+
+      <aside class="listing-card" aria-label="Miete und Besichtigung">
+        <p class="listing-price">730 €</p>
+        <p class="listing-price-label">Warmmiete laut Inserat</p>
+        <dl class="listing-facts">
+          <div><dt>Wohnfläche</dt><dd>38 m²</dd></div>
+          <div><dt>Zimmer</dt><dd>1</dd></div>
+          <div><dt>Wohnungstyp</dt><dd>Etagenwohnung</dd></div>
+        </dl>
+        <button class="download viewing-button" type="button" data-open-app aria-haspopup="dialog" aria-controls="app-dialog">Besichtigung buchen</button>
+        <p class="listing-status">Inserat vom 27. Februar 2026. Aktuelle Verfügbarkeit und Besichtigungstermine sind nicht bestätigt.</p>
+      </aside>
+    </div>
+
+    <section class="listing-description" aria-labelledby="about-listing">
+      <h2 id="about-listing">Über die Wohnung</h2>
+      <p>Die Wohnung im Severinsviertel hat einen Wohn- und Schlafraum, einen kleinen Flur mit begehbarem Schrank, eine separate Küche und ein Bad mit Badewanne. Zur Wohnung gehören ein Balkon und ein Kellerraum.</p>
+      <p>Laut Inserat war die Heizkostenpauschale in der Warmmiete enthalten. Strom wurde separat abgerechnet. Ein Stellplatz im Innenhof wurde für 80 € im Monat angeboten.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-bottom"><div class="shell">© 2026 · Unabhängiges Projekt · Köln</div></div>
+  </footer>
+
+  <dialog id="app-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+    <form method="dialog">
+      <button class="close-dialog" aria-label="Fenster schließen">×</button>
+    </form>
+    <h2 id="dialog-title">Besichtigung über die App</h2>
+    <p id="dialog-description">Um einen verfügbaren Besichtigungstermin zu buchen, benötigen Sie die App. Für diese Wohnung sind derzeit keine Termine bestätigt.</p>
+    <button class="download" type="button" disabled aria-describedby="download-status">APP HERUNTERLADEN</button>
+    <p class="download-status" id="download-status">Der Download ist noch nicht verfügbar.</p>
+  </dialog>
+</body>
+</html>

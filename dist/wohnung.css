@@ -78,6 +78,10 @@
 .listing-status { margin-top: 14px; font-size: .875rem; }
 .listing-description { max-width: 44rem; margin-top: clamp(28px, 6vw, 58px); }
 .listing-description p { margin-top: 14px; }
+.listing-description-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 760px) {
   .listing-grid { grid-template-columns: minmax(0, 1fr); }
 }

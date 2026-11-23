@@ -19,6 +19,12 @@ h1, p { margin: 0; }
   margin-inline: auto;
 }
 .site-header { background: #fff; }
+.page-home {
+  color: var(--navy);
+  font: 400 1.45rem/1.2 Georgia, serif;
+  text-decoration: none;
+}
+.page-home:hover { text-decoration: underline; }
 .header-inner {
   display: flex;
   justify-content: space-between;
@@ -199,6 +205,7 @@ h2 { font-size: clamp(1.95rem, 4vw, 3.3rem); letter-spacing: -.035em; }
   text-decoration: none;
 }
 .catalog-link:hover { border-color: #a68152; }
+.catalog-link--no-photo { grid-template-columns: minmax(0, 1fr); }
 .catalog-link img {
   display: block;
   width: 100%;

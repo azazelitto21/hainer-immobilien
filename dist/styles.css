@@ -186,6 +186,42 @@ h1 {
 .search-submit:hover { background: #28445f; }
 h2, h3 { margin: 0; font: 400 1.65rem/1.15 Georgia, serif; }
 h2 { font-size: clamp(1.95rem, 4vw, 3.3rem); letter-spacing: -.035em; }
+.catalog { padding-top: clamp(42px, 6vw, 68px); }
+.catalog-card { max-width: 54rem; margin-top: 24px; }
+.catalog-link {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  overflow: hidden;
+  border: 1px solid #e1ded6;
+  border-radius: 4px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+}
+.catalog-link:hover { border-color: #a68152; }
+.catalog-link img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.catalog-details {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 9px;
+  min-width: 0;
+  padding: clamp(20px, 3vw, 36px);
+}
+.catalog-meta { color: #546475; font-size: .875rem; }
+.catalog-facts { font-weight: 650; }
+.catalog-action {
+  margin-top: 5px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .neighborhoods { padding-block: 68px 75px; }
 .section-intro { margin-top: 10px; color: #546475; }
 .neighborhood-grid {
@@ -235,6 +271,7 @@ dialog .download-status { color: #546475; }
 :focus-visible { outline: 2px solid #aa7231; outline-offset: 2px; }
 @media (max-width: 640px) {
   .hero-inner { padding-block: 55px; }
+  .catalog-link { grid-template-columns: minmax(0, 1fr); }
   .neighborhoods { padding-block: 42px; }
   .neighborhood-grid { grid-template-columns: 1fr; gap: 12px; }
   .app-layout { align-items: flex-start; flex-direction: column; }

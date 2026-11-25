@@ -15,8 +15,13 @@ deklarierten D1- und R2-Bindings und wendet die SQL-Migration in `drizzle/` an.
 
 Die Verwaltung liegt unter `/admin`. Die Laufzeitvariable `ADMIN_EMAIL` muss
 die E-Mail-Adresse des berechtigten ChatGPT-Kontos enthalten. Ohne diese
-Variable ist die Verwaltung gesperrt. Neue Objekte werden in D1 gespeichert,
-optionale Titelbilder in R2. Veröffentlicht werden nur Objekte aus der Verwaltung.
+Variable ist die Verwaltung gesperrt. Dort lassen sich Objekte erstellen,
+bearbeiten und deaktivieren. Die Verwaltung zeigt außerdem die für die Web-App
+registrierten Konten an. Objekte und Buchungen werden in D1 gespeichert,
+optionale Titelbilder in R2.
 
-Sobald der App-Download bereitsteht, die Schaltflächen in den HTML-Vorlagen
-und im Dialog in `worker/index.mjs` mit der Downloadadresse verbinden.
+Unter `/webview` können sich Besucher mit E-Mail-Adresse und Passwort
+registrieren, aktive Objekte ansehen und eigene Besichtigungen buchen. Der
+Termin liegt drei Kalendertage nach dem aktuellen Datum in Köln. Das bisherige
+Exposé für die Südstadt erscheint nach der Aktivierung durch die Verwaltung in
+der Web-App. Die Web-App benötigt den Worker und die D1-Migrationen.

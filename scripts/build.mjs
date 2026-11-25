@@ -25,6 +25,7 @@ for (const entry of files) {
   assets[filename.slice(dist.length)] = { type, data: data.toString('base64') };
 }
 
-const source = await readFile(join(root, 'worker', 'index.mjs'), 'utf8');
+const sources = await Promise.all(['index.mjs', 'webview.mjs'].map(name =>
+  readFile(join(root, 'worker', name), 'utf8')));
 await mkdir(join(dist, 'server'), { recursive: true });
-await writeFile(join(dist, 'server', 'index.js'), `const staticFiles = ${JSON.stringify(assets)};\n${source}`);
+await writeFile(join(dist, 'server', 'index.js'), `const staticFiles = ${JSON.stringify(assets)};\n${sources.join('\n')}`);

@@ -17,7 +17,7 @@
         <img src="/assets/mark.svg" width="42" height="42" alt="">
         <span>VON POLL<small>IMMOBILIEN</small></span>
       </div>
-      <button type="button" class="download header-download" data-open-app aria-haspopup="dialog">APP HERUNTERLADEN</button>
+      <a class="download header-download" href="/webview">APP ÖFFNEN</a>
     </div>
   </header>
 
@@ -38,6 +38,7 @@
 
     <section class="shell catalog" aria-labelledby="catalog-title">
       <h2 id="catalog-title">Wohnungsexposés in Köln</h2>
+      <!-- original-listing -->
       <article class="catalog-card">
         <a href="wohnung-koeln-suedstadt.html" class="catalog-link" aria-labelledby="catalog-listing-title">
           <img src="assets/suedstadt/image12.webp" alt="Wohn- und Schlafraum" width="1280" height="959" loading="lazy">
@@ -50,6 +51,7 @@
           </div>
         </a>
       </article>
+      <!-- end-original-listing -->
       <!-- rental-listings -->
     </section>
 
@@ -78,7 +80,7 @@
           <h2 id="app-title">Die Wohnungsdatenbank<br>für Köln</h2>
           <p>In der App suchen Sie nach Mietwohnungen in Ihrem Wunschviertel. Auf der Website finden Sie Wohnungsexposés und Informationen zu den Kölner Veedeln.</p>
         </div>
-        <button type="button" class="download" data-open-app aria-haspopup="dialog">APP HERUNTERLADEN</button>
+        <a class="download" href="/webview">APP ÖFFNEN</a>
       </div>
     </section>
   </main>
@@ -115,8 +117,7 @@
     </form>
     <h2 id="dialog-title">Wohnungssuche in der App</h2>
     <p id="dialog-description">Für die Suche nach Mietwohnungen in Köln benötigen Sie die App.</p>
-    <button class="download" type="button" disabled aria-describedby="download-status">APP HERUNTERLADEN</button>
-    <p class="download-status" id="download-status">Der Download ist noch nicht verfügbar.</p>
+    <a class="download" href="/webview">App öffnen</a>
   </dialog>
 </body>
 </html>

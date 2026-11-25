@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14273b">
+  <meta name="robots" content="noindex">
+  <title>Besichtigungen · Wohnungsdatenbank Köln</title>
+  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/webview.css">
+  <script src="/webview.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="shell header-inner">
+      <a class="brand" href="/webview" aria-label="VON POLL IMMOBILIEN · Besichtigungen">
+        <img src="/assets/mark.svg" width="40" height="40" alt="">
+        <span>VON POLL<small>IMMOBILIEN</small></span>
+      </a>
+      <a id="website-link" class="header-link" href="/">Zur Website</a>
+      <button id="logout" class="text-button" type="button" hidden>Abmelden</button>
+    </div>
+  </header>
+
+  <main class="shell app-main">
+    <p id="message" class="message" role="status" aria-live="polite" hidden></p>
+    <div id="loading" class="loading">
+      <p id="loading-message" role="status">App wird geladen …</p>
+      <button type="button" class="button button-secondary" id="reload" hidden>Erneut versuchen</button>
+    </div>
+
+    <section id="auth" class="auth-layout" aria-labelledby="auth-heading" hidden>
+      <div class="auth-photo">
+        <div>
+          <p class="eyebrow">Mietwohnungen in Köln</p>
+          <h1>Ihr nächster<br>Besichtigungstermin.</h1>
+        </div>
+      </div>
+      <div class="auth-panel">
+        <div class="auth-inner">
+          <h2 id="auth-heading">Anmelden</h2>
+          <p id="auth-intro">Melden Sie sich an, um Besichtigungen zu buchen und Ihre Termine einzusehen.</p>
+          <form id="auth-form" class="auth-form">
+            <label for="email">E-Mail-Adresse</label>
+            <input id="email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254" required>
+            <label for="password">Passwort</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+            <p id="password-hint" class="field-hint" hidden>Mindestens 12 Zeichen.</p>
+            <p id="auth-error" class="message error" role="alert" hidden></p>
+            <button id="auth-submit" class="button button-primary" type="submit">Anmelden</button>
+          </form>
+          <div class="auth-switch">
+            <span id="auth-question">Noch kein Konto?</span>
+            <button id="toggle-auth" class="text-button" type="button">Registrieren</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="application" aria-labelledby="application-title" hidden>
+      <div class="application-heading">
+        <div>
+          <p class="eyebrow">Mietwohnungen in Köln</p>
+          <h1 id="application-title" tabindex="-1">Besichtigungen</h1>
+        </div>
+        <p id="account-email" class="account-email"></p>
+      </div>
+      <nav class="app-nav" aria-label="Besichtigungen">
+        <a href="#objekte" id="catalog-tab" aria-current="page">Objekte</a>
+        <a href="#buchungen" id="bookings-tab">Meine Buchungen</a>
+      </nav>
+
+      <section id="catalog-panel" class="app-section" aria-labelledby="catalog-heading">
+        <div class="section-heading">
+          <h2 id="catalog-heading" tabindex="-1">Verfügbare Objekte</h2>
+          <p id="catalog-date" class="catalog-date" hidden>Besichtigung am <time id="visit-date"></time></p>
+        </div>
+        <p id="catalog-empty" class="empty-state" role="status" hidden>Zurzeit sind keine Objekte für eine Besichtigung verfügbar.</p>
+        <div id="listings" class="listings"></div>
+      </section>
+
+      <section id="bookings-panel" class="app-section" aria-labelledby="bookings-heading" hidden>
+        <div class="section-heading">
+          <h2 id="bookings-heading" tabindex="-1">Meine Buchungen</h2>
+        </div>
+        <p id="bookings-empty" class="empty-state" role="status" hidden>Sie haben noch keine Besichtigungen gebucht.</p>
+        <ul id="bookings" class="bookings"></ul>
+      </section>
+      <button id="retry-data" class="button button-secondary" type="button" hidden>Erneut versuchen</button>
+    </section>
+    <noscript><p>Aktivieren Sie JavaScript, um Besichtigungen zu buchen.</p></noscript>
+  </main>
+
+  <dialog id="confirm-booking" aria-labelledby="confirm-heading">
+    <form id="booking-form">
+      <h2 id="confirm-heading">Besichtigung buchen</h2>
+      <p id="confirm-title" class="confirm-title"></p>
+      <p>Besichtigung am <time id="confirm-date"></time></p>
+      <p id="booking-error" class="message error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button id="cancel-booking" class="button button-secondary" type="button">Abbrechen</button>
+        <button id="submit-booking" class="button button-primary" type="submit">Verbindlich buchen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="app-footer"><div class="shell">Wohnungsdatenbank Köln · Unabhängiges Projekt</div></footer>
+</body>
+</html>

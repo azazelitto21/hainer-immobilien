@@ -2,6 +2,7 @@
   max-width: 48rem;
   padding-block: clamp(30px, 6vw, 64px);
 }
+.admin-dashboard { max-width: 65rem; }
 .admin h1 { font-size: clamp(2rem, 5vw, 3.8rem); }
 .admin > p { margin-top: 16px; }
 .admin-heading {
@@ -13,6 +14,86 @@
 }
 .admin a { color: inherit; }
 .admin-heading a { font-size: .9rem; }
+.admin-panel {
+  margin-top: 24px;
+  border: 1px solid #e1ded6;
+  border-radius: 4px;
+  background: #fff;
+}
+.admin-panel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+}
+.admin-panel h2 {
+  margin: 0;
+  font: 400 clamp(1.45rem, 3vw, 2.1rem)/1.2 Georgia, serif;
+}
+.admin-panel-heading .download { margin-top: 0; }
+.admin-empty { padding: 0 22px 20px; color: #546475; }
+.admin-table-scroll { overflow-x: auto; }
+.admin table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.admin th, .admin td {
+  padding: 13px 22px;
+  border-top: 1px solid #ece9e2;
+  vertical-align: middle;
+}
+.admin th[scope="col"] {
+  background: #f8f7f3;
+  font-size: .875rem;
+  white-space: nowrap;
+}
+.admin th[scope="row"] { font-weight: 650; overflow-wrap: anywhere; }
+.admin th[scope="row"] span {
+  display: block;
+  margin-top: 2px;
+  color: #546475;
+  font-size: .875rem;
+  font-weight: 400;
+}
+.admin-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 3px;
+  color: #485365;
+  background: #eef0f3;
+  font-size: .875rem;
+  white-space: nowrap;
+}
+.admin-status-active { color: #315b3a; background: #e9f0e9; }
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 13px;
+  font-size: .875rem;
+}
+.admin-actions a, .admin-actions button { white-space: nowrap; }
+.admin-actions button {
+  padding: 6px 9px;
+  border: 1px solid #9aa6b4;
+  border-radius: 3px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.admin-actions button:hover { background: #f3f1eb; }
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 14px;
+  border-top: 1px solid #ece9e2;
+  font-size: .875rem;
+}
 .admin-form {
   display: grid;
   gap: 20px;
@@ -55,4 +136,7 @@
 .admin-error { border-color: #8b3c3c; background: #faebeb; }
 @media (max-width: 510px) {
   .admin-fields { grid-template-columns: 1fr; }
+  .admin th, .admin td { padding-inline: 12px; }
+  .admin-panel-heading, .admin-empty { padding-inline: 12px; }
+  .admin-dashboard table { min-width: 22rem; }
 }

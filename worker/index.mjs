@@ -36,7 +36,7 @@ function page(title, main, { admin = false } = {}) {
   return '<!doctype html><html lang="de"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<title>' + escapeHtml(title) + '</title><link rel="stylesheet" href="/styles.css?v=9">' +
-    (admin ? '<link rel="stylesheet" href="/admin.css">' : '<link rel="stylesheet" href="/wohnung.css">') +
+    (admin ? '<link rel="stylesheet" href="/admin.css?v=2">' : '<link rel="stylesheet" href="/wohnung.css">') +
     '</head><body>' +
     '<header class="site-header"><div class="shell header-inner"><a class="page-home" href="/">Wohnungsdatenbank Köln</a></div></header>' +
     main + '<footer class="site-footer"><div class="footer-bottom">© 2026 · Unabhängiges Projekt · Köln</div></footer>' +
@@ -75,7 +75,8 @@ function adminForm({ id, values = {}, problem = '' } = {}) {
   const input = (name, label, attributes) => '<label>' + label + '<input name="' + name + '" value="' +
     escapeHtml(values[name] ?? '') + '" ' + attributes + ' required></label>';
   return adminPage(id ? 'Mietobjekt bearbeiten' : 'Mietobjekt hinzufügen',
-    '<p><a href="/admin">Zur Verwaltung</a></p>' + adminMessage(problem, true) +
+    '<nav class="admin-links" aria-label="Verwaltung"><a href="/admin#objects">Zu den Objekten</a>' +
+    (id ? '<a href="' + formPath + '/termine">Besichtigungstermine</a>' : '') + '</nav>' + adminMessage(problem, true) +
     '<form class="admin-form" action="' + formPath + '" method="post" enctype="multipart/form-data">' +
     (id ? '' : '<input type="hidden" name="id" value="' + escapeHtml(values.id || crypto.randomUUID()) + '">') +
     input('title', 'Titel', 'maxlength="100"') + input('location', 'Stadtteil oder Ort', 'maxlength="90"') +
@@ -117,7 +118,7 @@ function adminListingRow(row) {
     '<td>' + euros.format(row.rent_cents / 100) + '</td>' +
     '<td><span class="admin-status' + (active ? ' admin-status-active' : '') + '">' +
     (active ? 'Veröffentlicht' : 'Ausgeblendet') + '</span></td>' +
-    '<td><div class="admin-actions"><a href="' + path + '">Bearbeiten</a>' +
+    '<td><div class="admin-actions"><a href="' + path + '">Bearbeiten</a><a href="' + path + '/termine">Termine</a>' +
     '<form action="' + path + '/status" method="post">' +
     '<input type="hidden" name="active" value="' + (active ? '0' : '1') + '">' +
     '<button type="submit">' + (active ? 'Ausblenden' : 'Veröffentlichen') + '</button></form></div></td></tr>';
@@ -126,7 +127,8 @@ function adminListingRow(row) {
 function adminUserRow(row) {
   const timestamp = String(row.created_at);
   const date = new Date(timestamp.includes('T') ? timestamp : timestamp.replace(' ', 'T') + 'Z');
-  return '<tr><th scope="row">' + escapeHtml(row.email) + '</th><td>' +
+  return '<tr><th scope="row">' + escapeHtml(row.email) + '</th><td class="admin-phone">' +
+    escapeHtml(row.phone || '—') + '</td><td>' +
     (Number.isNaN(date.getTime()) ? '—' : adminDate.format(date)) + '</td></tr>';
 }
 
@@ -136,7 +138,7 @@ async function adminDashboard(url, env) {
   const [{ results: listings }, { results: accounts }] = await Promise.all([
     env.DB.prepare('SELECT id, title, location, rent_cents, is_active FROM rental_listings ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?')
       .bind(adminPageSize + 1, (objects - 1) * adminPageSize).all(),
-    env.DB.prepare('SELECT email, created_at FROM webview_users ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?')
+    env.DB.prepare('SELECT email, phone, created_at FROM webview_users ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?')
       .bind(adminPageSize + 1, (users - 1) * adminPageSize).all(),
   ]);
   const notices = {
@@ -158,7 +160,7 @@ async function adminDashboard(url, env) {
     '<section class="admin-panel" id="users" aria-labelledby="admin-users-title">' +
     '<div class="admin-panel-heading"><h2 id="admin-users-title">Registrierte Benutzer</h2></div>' +
     (accounts.length ? '<div class="admin-table-scroll"><table><thead><tr><th scope="col">E-Mail</th>' +
-      '<th scope="col">Registriert am</th></tr></thead><tbody>' +
+      '<th scope="col">Telefon</th><th scope="col">Registriert am</th></tr></thead><tbody>' +
       accounts.slice(0, adminPageSize).map(adminUserRow).join('') + '</tbody></table></div>' :
       '<p class="admin-empty">Keine registrierten Benutzer auf dieser Seite.</p>') +
     adminPagination('users', users, objects, accounts.length > adminPageSize) + '</section>',
@@ -313,7 +315,102 @@ async function changeListingStatus(request, env, id) {
   return redirect('/admin?' + (active === '1' ? 'shown=' : 'hidden=') + id + '#objects');
 }
 
-const adminListingPath = new RegExp('^/admin/objekte/(' + ID + ')(/status)?$');
+async function showAdminSchedule(env, listing, path, { notice, problem, date, time } = {}) {
+  const { minDate } = bookingWindow();
+  const { results: slots } = await env.DB.prepare(
+    'SELECT visit_date, visit_time FROM rental_viewing_slots WHERE listing_id = ? AND visit_date >= ? ORDER BY visit_date, visit_time',
+  ).bind(listing.id, minDate).all();
+  const editPath = '/admin/objekte/' + listing.id;
+  const custom = listing.custom_schedule === 1;
+  const rows = slots.map(({ visit_date, visit_time }) => {
+    const slotDate = escapeHtml(visit_date);
+    const slotTime = escapeHtml(visit_time);
+    const dateLabel = adminDate.format(new Date(visit_date + 'T00:00:00Z'));
+    return '<tr><th scope="row"><time datetime="' + slotDate + '">' +
+      dateLabel + '</time></th><td>' + slotTime + ' Uhr</td>' +
+      '<td><form class="admin-actions" method="post" action="' + path + '">' +
+      '<input type="hidden" name="date" value="' + slotDate + '">' +
+      '<input type="hidden" name="time" value="' + slotTime + '">' +
+      '<button type="submit" name="action" value="remove" aria-label="Entfernen des Termins am ' + dateLabel + ' um ' +
+      slotTime + ' Uhr">Entfernen</button></form></td></tr>';
+  }).join('');
+
+  return reply(adminPage('Besichtigungstermine',
+    '<p class="admin-schedule-object">' + escapeHtml(listing.title) + '</p>' +
+    '<nav class="admin-links" aria-label="Verwaltung"><a href="/admin#objects">Zu den Objekten</a>' +
+    '<a href="' + editPath + '">Objekt bearbeiten</a></nav>' +
+    adminMessage(notice) + adminMessage(problem, true) +
+    '<section class="admin-panel" aria-labelledby="schedule-mode-title"><div class="admin-panel-heading">' +
+    '<h2 id="schedule-mode-title">Terminplan</h2><span class="admin-status admin-status-active">' +
+    (custom ? 'Eigene Termine' : 'Automatisch') + '</span></div>' +
+    '<div class="admin-panel-body"><p>Zeiten gelten für Köln (Europe/Berlin). Der früheste buchbare Termin liegt drei Tage in der Zukunft.</p>' +
+    '<p>Der automatische Plan bietet täglich Termine für Tage 3 bis 30 an. Eigene Termine können Sie ab Tag 3 auch weiter im Voraus planen.</p>' +
+    '<form class="admin-actions admin-schedule-mode" action="' + path + '" method="post">' +
+    '<input type="hidden" name="mode" value="' + (custom ? 'automatic' : 'custom') + '">' +
+    '<button type="submit" name="action" value="mode">' +
+    (custom ? 'Automatischen Plan aktivieren' : 'Eigene Termine aktivieren') + '</button></form></div></section>' +
+    '<section class="admin-panel" aria-labelledby="schedule-slots-title"><div class="admin-panel-heading">' +
+    '<h2 id="schedule-slots-title">Eigene Termine</h2></div>' +
+    '<form class="admin-form admin-schedule-form" action="' + path + '" method="post">' +
+    '<p>Beim Hinzufügen eines Termins wird der eigene Terminplan aktiviert. Ein leerer eigener Plan pausiert die Buchung.</p>' +
+    '<div class="admin-fields admin-schedule-fields"><label>Datum<input type="date" name="date" min="' +
+    minDate + '" value="' + escapeHtml(typeof date === 'string' ? date : minDate) + '" required></label>' +
+    '<label>Uhrzeit<input type="time" name="time" step="60" value="' +
+    escapeHtml(typeof time === 'string' ? time : '') + '" required></label></div>' +
+    '<button class="download" type="submit" name="action" value="add">Termin hinzufügen</button></form>' +
+    (rows ? '<div class="admin-table-scroll"><table><thead><tr><th scope="col">Datum</th><th scope="col">Uhrzeit</th>' +
+      '<th scope="col">Aktion</th></tr></thead><tbody>' + rows + '</tbody></table></div>' :
+      '<p class="admin-empty">Keine eigenen Termine geplant.</p>') + '</section>'), problem ? 422 : 200, PRIVATE);
+}
+
+async function handleAdminSchedule(request, env, url, id) {
+  const path = '/admin/objekte/' + id + '/termine';
+  const listing = await env.DB.prepare('SELECT id, title, custom_schedule FROM rental_listings WHERE id = ?').bind(id).first();
+  if (!listing) return adminNotice('Objekt nicht gefunden', '<p><a href="/admin">Zur Verwaltung</a></p>', 404);
+  if (request.method === 'GET') {
+    const notices = new Map([
+      ['mode', 'Terminplan gespeichert.'],
+      ['add', 'Termin hinzugefügt.'],
+      ['remove', 'Termin entfernt.'],
+    ]);
+    return showAdminSchedule(env, listing, path, { notice: notices.get(url.searchParams.get('saved')) });
+  }
+
+  let form;
+  try { form = await request.formData(); }
+  catch { return reply('Ungültiges Formular', 400, PRIVATE); }
+  const action = form.get('action');
+  const date = form.get('date');
+  const time = form.get('time');
+  const invalid = problem => showAdminSchedule(env, listing, path, { problem, date, time });
+
+  if (action === 'mode') {
+    const mode = form.get('mode');
+    if (mode !== 'automatic' && mode !== 'custom') return invalid('Bitte wählen Sie einen gültigen Terminplan.');
+    await env.DB.prepare('UPDATE rental_listings SET custom_schedule = ? WHERE id = ?')
+      .bind(Number(mode === 'custom'), id).run();
+  } else if (action === 'add') {
+    if (!validViewingSlot(date, time)) {
+      return invalid('Bitte wählen Sie ein Datum ab dem dritten Tag und geben Sie eine gültige Uhrzeit für Köln an.');
+    }
+    await env.DB.batch([
+      env.DB.prepare('UPDATE rental_listings SET custom_schedule = 1 WHERE id = ?').bind(id),
+      env.DB.prepare(`INSERT INTO rental_viewing_slots (listing_id, visit_date, visit_time) VALUES (?, ?, ?)
+        ON CONFLICT (listing_id, visit_date, visit_time) DO NOTHING`).bind(id, date, time),
+    ]);
+  } else if (action === 'remove') {
+    if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !validViewingTime(time)) {
+      return invalid('Bitte wählen Sie einen gültigen Termin.');
+    }
+    await env.DB.prepare('DELETE FROM rental_viewing_slots WHERE listing_id = ? AND visit_date = ? AND visit_time = ?')
+      .bind(id, date, time).run();
+  } else {
+    return invalid('Bitte wählen Sie eine gültige Aktion.');
+  }
+  return redirect(path + '?saved=' + action);
+}
+
+const adminListingPath = new RegExp('^/admin/objekte/(' + ID + ')(?:/(status|termine))?$');
 
 async function handleAdmin(request, url, env) {
   const path = url.pathname.replace(/\/$/, '');
@@ -322,7 +419,7 @@ async function handleAdmin(request, url, env) {
   const create = path === '/admin/objekte';
   if (!dashboard && !create && !match) return adminNotice('Seite nicht gefunden', '<p><a href="/admin">Zur Verwaltung</a></p>', 404);
   const id = match?.[1];
-  const statusChange = Boolean(match?.[2]);
+  const statusChange = match?.[2] === 'status';
   const allow = dashboard ? 'GET' : statusChange ? 'POST' : 'GET, POST';
   if (!allow.split(', ').includes(request.method)) {
     return reply('Method not allowed', 405, { ...PRIVATE, allow });
@@ -345,6 +442,7 @@ async function handleAdmin(request, url, env) {
     await ensureOriginalListing(env.DB);
     if (dashboard) return await adminDashboard(url, env);
     if (statusChange) return await changeListingStatus(request, env, id);
+    if (match?.[2] === 'termine') return await handleAdminSchedule(request, env, url, id);
     if (write) return await saveListing(request, env, id);
     if (create) return reply(adminForm(), 200, PRIVATE);
     const values = await env.DB.prepare(

@@ -7,8 +7,8 @@
   <meta name="robots" content="noindex">
   <title>Besichtigungen · Wohnungsdatenbank Köln</title>
   <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/webview.css?v=2">
-  <script src="/webview.js?v=2" defer></script>
+  <link rel="stylesheet" href="/webview.css?v=3">
+  <script src="/webview.js?v=3" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -33,16 +33,20 @@
       <div class="auth-photo">
         <div>
           <p class="eyebrow">Mietwohnungen in Köln</p>
-          <h1>Ihr nächster<br>Besichtigungstermin.</h1>
+          <p class="auth-tagline">Ihr nächster<br>Besichtigungstermin.</p>
         </div>
       </div>
       <div class="auth-panel">
         <div class="auth-inner">
-          <h2 id="auth-heading">Anmelden</h2>
+          <h1 id="auth-heading" tabindex="-1">Anmelden</h1>
           <p id="auth-intro">Melden Sie sich an, um Besichtigungen zu buchen und Ihre Termine einzusehen.</p>
           <form id="auth-form" class="auth-form">
             <label for="email">E-Mail-Adresse</label>
             <input id="email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254" required>
+            <div id="phone-field" class="phone-field" hidden>
+              <label for="phone">Telefonnummer</label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="50" disabled>
+            </div>
             <label for="password">Passwort</label>
             <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
             <p id="password-hint" class="field-hint" hidden>Mindestens 12 Zeichen.</p>
@@ -57,15 +61,15 @@
       </div>
     </section>
 
-    <section id="application" aria-labelledby="application-title" hidden>
+    <section id="application" aria-label="Besichtigungen" hidden>
       <div class="application-heading">
         <div>
           <p class="eyebrow">Mietwohnungen in Köln</p>
-          <h1 id="application-title" tabindex="-1">Besichtigungen</h1>
+          <h1 id="application-title">Besichtigungen</h1>
         </div>
         <p id="account-email" class="account-email"></p>
       </div>
-      <nav class="app-nav" aria-label="Besichtigungen">
+      <nav id="app-nav" class="app-nav" aria-label="Besichtigungen">
         <a href="#objekte" id="catalog-tab" aria-current="page">Objekte</a>
         <a href="#buchungen" id="bookings-tab">Meine Buchungen</a>
       </nav>
@@ -77,6 +81,11 @@
         </div>
         <p id="catalog-empty" class="empty-state" role="status" hidden>Zurzeit sind keine Objekte für eine Besichtigung verfügbar.</p>
         <div id="listings" class="listings"></div>
+        <nav id="catalog-pager" class="pager" aria-label="Objektseiten" hidden>
+          <button type="button" class="button button-secondary" data-page="previous">Zurück</button>
+          <p aria-live="polite"></p>
+          <button type="button" class="button button-secondary" data-page="next">Weiter</button>
+        </nav>
       </section>
 
       <section id="bookings-panel" class="app-section" aria-labelledby="bookings-heading" hidden>
@@ -85,32 +94,53 @@
         </div>
         <p id="bookings-empty" class="empty-state" role="status" hidden>Sie haben noch keine Besichtigungen gebucht.</p>
         <ul id="bookings" class="bookings"></ul>
+        <nav id="bookings-pager" class="pager" aria-label="Buchungsseiten" hidden>
+          <button type="button" class="button button-secondary" data-page="previous">Zurück</button>
+          <p aria-live="polite"></p>
+          <button type="button" class="button button-secondary" data-page="next">Weiter</button>
+        </nav>
       </section>
+
+      <section id="booking-panel" class="booking-panel" aria-labelledby="booking-heading" hidden>
+        <button id="cancel-booking" class="text-button booking-back" type="button">Zurück zu den Objekten</button>
+        <h2 id="booking-heading" tabindex="-1">Datum auswählen</h2>
+        <p id="booking-listing" class="booking-listing"></p>
+        <p id="booking-error" class="message error" role="alert" hidden></p>
+        <p id="calendar-status" class="calendar-status" role="status" hidden></p>
+        <button id="retry-calendar" class="button button-secondary" type="button" hidden>Erneut versuchen</button>
+
+        <div id="calendar-step" class="booking-step" hidden>
+          <div class="month-nav">
+            <button id="previous-month" class="button button-secondary" type="button" aria-label="Vorheriger Monat">Zurück</button>
+            <p id="month-title" aria-live="polite"></p>
+            <button id="next-month" class="button button-secondary" type="button" aria-label="Nächster Monat">Weiter</button>
+          </div>
+          <div class="weekday-row" aria-hidden="true">
+            <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+          </div>
+          <div id="calendar-days" class="calendar-days" role="group" aria-label="Tag der Besichtigung"></div>
+          <p id="calendar-caption" class="field-hint" role="status"></p>
+        </div>
+
+        <form id="booking-form" class="booking-step" hidden>
+          <div class="selected-date">
+            <time id="selected-date"></time>
+            <button id="change-date" class="text-button" type="button">Datum ändern</button>
+          </div>
+          <div id="time-slots" class="time-slots" role="group" aria-label="Uhrzeit in Köln"></div>
+          <nav id="times-pager" class="pager" aria-label="Weitere Uhrzeiten" hidden>
+            <button type="button" class="button button-secondary" data-page="previous">Zurück</button>
+            <p aria-live="polite"></p>
+            <button type="button" class="button button-secondary" data-page="next">Weiter</button>
+          </nav>
+          <button id="submit-booking" class="button button-primary" type="submit" disabled>Besichtigung buchen</button>
+        </form>
+      </section>
+
       <button id="retry-data" class="button button-secondary" type="button" hidden>Erneut versuchen</button>
     </section>
     <noscript><p>Aktivieren Sie JavaScript, um Besichtigungen zu buchen.</p></noscript>
   </main>
-
-  <dialog id="confirm-booking" aria-labelledby="confirm-heading">
-    <form id="booking-form">
-      <h2 id="confirm-heading">Besichtigung buchen</h2>
-      <p id="confirm-title" class="confirm-title"></p>
-      <div class="booking-fields">
-        <label for="booking-date">Datum</label>
-        <input id="booking-date" type="date" required>
-        <label for="booking-time">Uhrzeit in Köln</label>
-        <select id="booking-time" aria-describedby="slot-status" required disabled>
-          <option value="">Uhrzeit auswählen</option>
-        </select>
-        <p id="slot-status" class="slot-status" role="status"></p>
-      </div>
-      <p id="booking-error" class="message error" role="alert" hidden></p>
-      <div class="dialog-actions">
-        <button id="cancel-booking" class="button button-secondary" type="button">Abbrechen</button>
-        <button id="submit-booking" class="button button-primary" type="submit" disabled>Verbindlich buchen</button>
-      </div>
-    </form>
-  </dialog>
 
   <footer class="app-footer"><div class="shell">Wohnungsdatenbank Köln · Unabhängiges Projekt</div></footer>
 </body>

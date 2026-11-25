@@ -7,6 +7,10 @@ const encoder = new TextEncoder();
 const berlinCalendar = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/Berlin', year: 'numeric', month: 'numeric', day: 'numeric',
 });
+const berlinClock = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+});
 const bookingColumns = 'id, listing_id, title, location, visit_date, visit_time, created_at';
 const viewingTimes = Array.from({ length: 8 }, (_, index) => (index + 10) + ':00');
 
@@ -25,12 +29,31 @@ function bookingWindow() {
   return { minDate: dateAfter(3), maxDate: dateAfter(30) };
 }
 
-function validViewingDate(value) {
+function validViewingDate(value, minDate = bookingWindow().minDate) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const { minDate, maxDate } = bookingWindow();
-  if (value < minDate || value > maxDate) return false;
+  if (value < minDate) return false;
   const parsed = new Date(value + 'T00:00:00Z');
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function validViewingTime(value) {
+  return typeof value === 'string' && /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+}
+
+function validViewingSlot(date, time) {
+  if (!validViewingDate(date) || !validViewingTime(time)) return false;
+  // Check both Berlin offsets so a skipped clock time cannot become a slot.
+  return ['+01:00', '+02:00'].some(offset => {
+    const instant = new Date(date + 'T' + time + ':00' + offset);
+    const parts = Object.fromEntries(berlinClock.formatToParts(instant).map(part => [part.type, part.value]));
+    return date === parts.year + '-' + parts.month + '-' + parts.day && time === parts.hour + ':' + parts.minute;
+  });
+}
+
+function registrationPhone(value) {
+  if (typeof value !== 'string' || value.length > 50 || !/^\+?[0-9().\s-]+$/.test(value.trim())) return null;
+  const phone = value.trim().replace(/[().\s-]/g, '');
+  return /^\+?[0-9]{6,15}$/.test(phone) ? phone : null;
 }
 
 function base64url(value) {
@@ -88,9 +111,9 @@ async function startSession(db, userId, oldTokenHash, newUser = null) {
       AND EXISTS (SELECT 1 FROM webview_users WHERE id = ?)`).bind(oldTokenHash, userId));
   }
   if (newUser) {
-    statements.unshift(db.prepare(`INSERT INTO webview_users (id, email, password_salt, password_hash)
-      VALUES (?, ?, ?, ?) ON CONFLICT(email) DO NOTHING`).bind(
-      userId, newUser.email, newUser.salt, newUser.hash,
+    statements.unshift(db.prepare(`INSERT INTO webview_users (id, email, password_salt, password_hash, phone)
+      VALUES (?, ?, ?, ?, ?) ON CONFLICT(email) DO NOTHING`).bind(
+      userId, newUser.email, newUser.salt, newUser.hash, newUser.phone,
     ));
   }
   const result = await db.batch(statements);
@@ -149,6 +172,9 @@ async function authenticate(request, db, action, oldTokenHash) {
     return apiError('Bitte geben Sie eine gültige E-Mail-Adresse und ein Passwort mit 12 bis 128 Zeichen ein.', 422);
   }
 
+  const phone = action === 'register' ? registrationPhone(body.phone) : null;
+  if (action === 'register' && !phone) return apiError('Bitte geben Sie eine gültige Telefonnummer ein.', 422);
+
   if (!await allowedAuthAttempt(request, db, action)) {
     return apiError('Zu viele Versuche. Bitte versuchen Sie es später erneut.', 429, { 'retry-after': String(authWindow) });
   }
@@ -157,7 +183,7 @@ async function authenticate(request, db, action, oldTokenHash) {
     const id = crypto.randomUUID();
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const hash = await passwordHash(password, salt);
-    const headers = await startSession(db, id, oldTokenHash, { email, salt: base64url(salt), hash });
+    const headers = await startSession(db, id, oldTokenHash, { email, salt: base64url(salt), hash, phone });
     if (!headers) return apiError('Für diese E-Mail-Adresse gibt es bereits ein Konto.', 409);
     return apiJson({ user: { id, email } }, 201, headers);
   }
@@ -187,21 +213,54 @@ async function webviewListings(db) {
   });
 }
 
-async function availableViewingTimes(db, user, params) {
-  const listingId = params.get('listingId') ?? '';
-  const date = params.get('visitDate');
-  if (!idPattern.test(listingId) || !validViewingDate(date)) {
-    return apiError('Bitte wählen Sie ein Datum innerhalb des Buchungszeitraums.', 422);
+async function viewingCalendar(db, user, listingId, date) {
+  const window = bookingWindow();
+  if (!idPattern.test(listingId) || (date !== undefined && !validViewingDate(date, window.minDate))) {
+    return apiError('Bitte wählen Sie ein Objekt und ein gültiges Datum.', 422);
   }
 
-  const listing = await db.prepare('SELECT 1 FROM rental_listings WHERE id = ? AND is_active = 1').bind(listingId).first();
+  const listing = await db.prepare('SELECT custom_schedule FROM rental_listings WHERE id = ? AND is_active = 1')
+    .bind(listingId).first();
   if (!listing) return apiError('Dieses Objekt ist zurzeit nicht verfügbar.', 404);
-  const { results } = await db.prepare(
-    'SELECT user_id, visit_time FROM webview_bookings WHERE listing_id = ? AND visit_date = ?',
-  ).bind(listingId, date).all();
-  const alreadyBooked = results.some(row => row.user_id === user.id);
-  const reserved = new Set(results.map(row => row.visit_time));
-  return apiJson({ alreadyBooked, times: alreadyBooked ? [] : viewingTimes.filter(time => !reserved.has(time)) });
+
+  const schedule = new Map();
+  if (listing.custom_schedule) {
+    const { results } = await db.prepare(`SELECT visit_date, visit_time FROM rental_viewing_slots
+      WHERE listing_id = ? AND visit_date BETWEEN ? AND ? ORDER BY visit_date, visit_time`)
+      .bind(listingId, date ?? window.minDate, date ?? '9999-12-31').all();
+    for (const row of results) {
+      if (!schedule.has(row.visit_date)) schedule.set(row.visit_date, []);
+      schedule.get(row.visit_date).push(row.visit_time);
+    }
+  } else if (date === undefined || date <= window.maxDate) {
+    const end = Date.parse(date ?? window.maxDate);
+    for (let day = Date.parse(date ?? window.minDate); day <= end; day += 86400000) {
+      schedule.set(new Date(day).toISOString().slice(0, 10), viewingTimes);
+    }
+  }
+
+  const dates = [...schedule.keys()];
+  const lastDate = dates.at(-1);
+  const personalDates = new Set();
+  const reserved = new Map();
+  if (lastDate) {
+    const { results } = await db.prepare(`SELECT visit_date, visit_time, user_id = ? AS mine
+      FROM webview_bookings WHERE listing_id = ? AND visit_date BETWEEN ? AND ?`)
+      .bind(user.id, listingId, dates[0], lastDate).all();
+    for (const row of results) {
+      if (row.mine) personalDates.add(row.visit_date);
+      if (!reserved.has(row.visit_date)) reserved.set(row.visit_date, new Set());
+      reserved.get(row.visit_date).add(row.visit_time);
+    }
+  }
+
+  const days = Object.fromEntries([...schedule].map(([day, times]) => [day, times.map(time => ({
+    time, available: !personalDates.has(day) && !reserved.get(day)?.has(time),
+  }))]));
+  if (date !== undefined) {
+    return apiJson({ alreadyBooked: personalDates.has(date), times: (days[date] ?? []).filter(slot => slot.available).map(slot => slot.time) });
+  }
+  return apiJson({ minDate: window.minDate, maxDate: lastDate > window.maxDate ? lastDate : window.maxDate, days });
 }
 
 async function webviewBookings(request, db, user) {
@@ -213,17 +272,25 @@ async function webviewBookings(request, db, user) {
   }
 
   const body = await smallJson(request);
+  const { minDate, maxDate } = bookingWindow();
   if (typeof body?.listingId !== 'string' || !idPattern.test(body.listingId) ||
-      !validViewingDate(body.visitDate) || !viewingTimes.includes(body.visitTime)) {
+      !validViewingDate(body.visitDate, minDate) || !validViewingTime(body.visitTime)) {
     return apiError('Bitte wählen Sie ein verfügbares Datum und eine gültige Uhrzeit aus.', 422);
   }
 
   const booking = await db.prepare(`
     INSERT INTO webview_bookings (id, user_id, listing_id, title, location, visit_date, visit_time)
-    SELECT ?, ?, id, title, location, ?, ? FROM rental_listings WHERE id = ? AND is_active = 1
+    SELECT ?, ?, l.id, l.title, l.location, ?, ? FROM rental_listings l
+    WHERE l.id = ? AND l.is_active = 1 AND (
+      (l.custom_schedule = 0 AND ? = 1) OR
+      (l.custom_schedule = 1 AND EXISTS (
+        SELECT 1 FROM rental_viewing_slots s WHERE s.listing_id = l.id AND s.visit_date = ? AND s.visit_time = ?
+      ))
+    )
     ON CONFLICT DO NOTHING
     RETURNING ${bookingColumns}
-  `).bind(crypto.randomUUID(), user.id, body.visitDate, body.visitTime, body.listingId).first();
+  `).bind(crypto.randomUUID(), user.id, body.visitDate, body.visitTime, body.listingId,
+    Number(body.visitDate <= maxDate && viewingTimes.includes(body.visitTime)), body.visitDate, body.visitTime).first();
   if (booking) return apiJson({ booking }, 201);
   const listing = await db.prepare('SELECT 1 FROM rental_listings WHERE id = ? AND is_active = 1').bind(body.listingId).first();
   return listing
@@ -235,7 +302,7 @@ async function handleWebviewApi(request, env, url) {
   const action = url.pathname.slice(apiPrefix.length);
   const methods = {
     session: ['GET'], register: ['POST'], login: ['POST'], logout: ['POST'],
-    listings: ['GET'], availability: ['GET'], bookings: ['GET', 'POST'],
+    listings: ['GET'], availability: ['GET'], calendar: ['GET'], bookings: ['GET', 'POST'],
   };
   const allowed = Object.hasOwn(methods, action) ? methods[action] : null;
   if (!allowed) return apiError('Seite nicht gefunden.', 404);
@@ -256,7 +323,10 @@ async function handleWebviewApi(request, env, url) {
     if (action === 'session') return apiJson({ user });
     if (!user) return apiError('Bitte melden Sie sich an.', 401);
     if (action === 'listings') return await webviewListings(db);
-    if (action === 'availability') return await availableViewingTimes(db, user, url.searchParams);
+    if (action === 'availability' || action === 'calendar') {
+      return await viewingCalendar(db, user, url.searchParams.get('listingId') ?? '',
+        action === 'availability' ? url.searchParams.get('visitDate') : undefined);
+    }
     return await webviewBookings(request, db, user);
   } catch {
     console.error('Webview API error on ' + action);

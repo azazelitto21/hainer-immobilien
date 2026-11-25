@@ -6,7 +6,10 @@ const elements = Object.fromEntries(
 const apiRoot = '/api/webview';
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 const number = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
-const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeZone: 'Europe/Berlin' });
+const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeZone: 'UTC' });
+const monthFormat = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const compact = matchMedia('(max-width: 42rem), (max-height: 43rem)');
+const pages = { catalog: 0, bookings: 0, times: 0 };
 const initialListing = new URL(location.href).searchParams.get('objekt');
 
 let user = null;
@@ -17,8 +20,13 @@ let bookingWindow = null;
 let listings = [];
 let bookings = [];
 let initialListingPending = Boolean(initialListing);
-let selectedListingId = null;
-let slotRequest = 0;
+let selectedListing = null;
+let calendar = null;
+let currentMonth = '';
+let selectedDate = '';
+let selectedTime = '';
+let calendarRequest = 0;
+let bookingSaving = false;
 
 class ApiError extends Error {
   constructor(message, status) {
@@ -94,21 +102,16 @@ function propertyCard(listing) {
     makeElement('h3', '', listing.title),
     makeElement('p', 'property-facts', facts.join(' · ')),
   );
-  if (listing.description) {
-    const details = makeElement('details');
-    details.append(makeElement('summary', '', 'Beschreibung'), makeElement('p', '', listing.description));
-    content.append(details);
-  }
 
   const actions = makeElement('div', 'property-actions');
-  const button = makeElement('button', 'button button-primary', 'Besichtigung buchen');
+  const button = makeElement('button', 'button button-primary', 'Termin buchen');
   button.type = 'button';
   button.setAttribute('aria-label', 'Besichtigung buchen für ' + listing.title);
-  button.addEventListener('click', () => prepareBooking(listing));
+  button.addEventListener('click', () => openBooking(listing));
   actions.append(button);
   const detail = sameOriginPath(listing.detail_url);
   if (detail) {
-    const link = makeElement('a', '', 'Exposé ansehen');
+    const link = makeElement('a', '', 'Exposé');
     link.href = detail;
     actions.append(link);
   }
@@ -130,45 +133,73 @@ function bookingItem(booking) {
   return item;
 }
 
+function pageSize(name) {
+  if (name === 'times') return 12;
+  if (compact.matches) return 1;
+  return name === 'catalog' ? 3 : 4;
+}
+
+function pageItems(name, items) {
+  const size = pageSize(name);
+  const count = Math.max(1, Math.ceil(items.length / size));
+  const page = Math.max(0, Math.min(pages[name], count - 1));
+  pages[name] = page;
+
+  const pager = elements[name + '-pager'];
+  const [previous, label, next] = pager.children;
+  previous.disabled = page === 0;
+  next.disabled = page === count - 1;
+  label.textContent = (page + 1) + ' / ' + count;
+  pager.hidden = count < 2;
+
+  return items.slice(page * size, (page + 1) * size);
+}
+
 function renderData() {
-  elements.listings.replaceChildren(...listings.map(propertyCard));
-  elements.bookings.replaceChildren(...bookings.map(bookingItem));
+  if (!bookingWindow) return;
+  if (initialListingPending) {
+    const index = listings.findIndex(listing => listing.id === initialListing);
+    if (index !== -1) pages.catalog = Math.floor(index / pageSize('catalog'));
+    initialListingPending = false;
+  }
+
+  elements.listings.replaceChildren(...pageItems('catalog', listings).map(propertyCard));
+  elements.bookings.replaceChildren(...pageItems('bookings', bookings).map(bookingItem));
   elements['catalog-empty'].hidden = listings.length > 0;
   elements['bookings-empty'].hidden = bookings.length > 0;
   elements['catalog-date'].hidden = false;
   setDate(elements['visit-date'], bookingWindow.minDate);
-
-  if (initialListingPending && location.hash !== '#buchungen') {
-    const card = document.getElementById('objekt-' + initialListing);
-    if (card) card.scrollIntoView({ block: 'nearest' });
-    initialListingPending = false;
-  }
 }
 
 function showPanel(focus = false) {
   const showBookings = location.hash === '#buchungen';
-  elements['catalog-panel'].hidden = showBookings;
-  elements['bookings-panel'].hidden = !showBookings;
+  const showBooking = Boolean(selectedListing);
+  elements.application.classList.toggle('booking-open', showBooking);
+  elements['app-nav'].hidden = showBooking;
+  elements['catalog-panel'].hidden = showBooking || showBookings;
+  elements['bookings-panel'].hidden = showBooking || !showBookings;
+  elements['booking-panel'].hidden = !showBooking;
   const catalog = elements['catalog-tab'];
   const history = elements['bookings-tab'];
   (showBookings ? catalog : history).removeAttribute('aria-current');
   (showBookings ? history : catalog).setAttribute('aria-current', 'page');
-  if (focus && user) elements[showBookings ? 'bookings-heading' : 'catalog-heading'].focus();
+  if (focus && user) elements[showBooking ? 'booking-heading' : showBookings ? 'bookings-heading' : 'catalog-heading'].focus();
 }
 
 function setAuthMode(nextRegistering) {
   registering = nextRegistering;
   const action = registering ? 'Registrieren' : 'Anmelden';
   elements['auth-heading'].textContent = registering ? 'Konto erstellen' : 'Anmelden';
-  elements['auth-intro'].textContent = registering
-    ? 'Erstellen Sie ein Konto, um Besichtigungen zu buchen.'
-    : 'Melden Sie sich an, um Besichtigungen zu buchen und Ihre Termine einzusehen.';
+  elements['auth-intro'].hidden = registering;
   elements['auth-submit'].textContent = action;
   elements['auth-question'].textContent = registering ? 'Bereits ein Konto?' : 'Noch kein Konto?';
   elements['toggle-auth'].textContent = registering ? 'Anmelden' : 'Registrieren';
   elements.password.autocomplete = registering ? 'new-password' : 'current-password';
   elements.password.minLength = registering ? 12 : 1;
   elements['password-hint'].hidden = !registering;
+  elements['phone-field'].hidden = !registering;
+  elements.phone.disabled = !registering;
+  elements.phone.required = registering;
   if (registering) elements.password.setAttribute('aria-describedby', 'password-hint');
   else elements.password.removeAttribute('aria-describedby');
   setMessage(elements['auth-error']);
@@ -177,6 +208,12 @@ function setAuthMode(nextRegistering) {
 function showSession(nextUser) {
   user = nextUser;
   dataRequest += 1;
+  calendarRequest += 1;
+  selectedListing = null;
+  calendar = null;
+  initialListingPending = Boolean(initialListing);
+  pages.catalog = 0;
+  pages.bookings = 0;
   loadingData = false;
   bookingWindow = null;
   listings = [];
@@ -187,6 +224,8 @@ function showSession(nextUser) {
   elements['catalog-empty'].hidden = true;
   elements['bookings-empty'].hidden = true;
   elements['retry-data'].hidden = true;
+  elements['catalog-pager'].hidden = true;
+  elements['bookings-pager'].hidden = true;
   elements.application.removeAttribute('aria-busy');
   elements.loading.hidden = true;
   elements['account-email'].textContent = user?.email || '';
@@ -195,11 +234,11 @@ function showSession(nextUser) {
   elements.application.hidden = !user;
   elements.auth.hidden = Boolean(user);
   elements.password.value = '';
+  elements.phone.value = '';
   showPanel();
 }
 
 function expireSession() {
-  elements['confirm-booking'].close();
   showSession(null);
   setAuthMode(false);
   setMessage(elements.message, 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
@@ -248,53 +287,177 @@ async function start() {
   }
 }
 
-async function refreshSlots() {
-  const dialog = elements['confirm-booking'];
-  const input = elements['booking-date'];
-  const select = elements['booking-time'];
-  const status = elements['slot-status'];
-  const request = ++slotRequest;
-  const placeholder = makeElement('option', '', 'Uhrzeit auswählen');
-  placeholder.value = '';
-  select.replaceChildren(placeholder);
-  select.disabled = true;
-  elements['submit-booking'].disabled = true;
-  status.textContent = '';
-  if (!input.value || !input.validity.valid) return;
+function isoDay(date) {
+  return date.toISOString().slice(0, 10);
+}
 
-  status.textContent = 'Freie Zeiten werden geladen …';
-  try {
-    const query = new URLSearchParams({ listingId: selectedListingId, visitDate: input.value });
-    const { times, alreadyBooked } = await api('/availability?' + query);
-    if (request !== slotRequest || !dialog.open) return;
-    status.textContent = alreadyBooked
-      ? 'Sie haben dieses Objekt an diesem Tag bereits gebucht.'
-      : times.length ? '' : 'An diesem Tag sind keine Termine frei.';
-    for (const time of times) {
-      const option = makeElement('option', '', time + ' Uhr');
-      option.value = time;
-      select.append(option);
+function monthStart(date) {
+  return date.slice(0, 7) + '-01';
+}
+
+function offsetMonth(month, offset) {
+  const date = new Date(month + 'T12:00:00Z');
+  date.setUTCMonth(date.getUTCMonth() + offset);
+  return isoDay(date);
+}
+
+function freeDay(day) {
+  return calendar.days[day]?.some(slot => slot.available);
+}
+
+function withinWindow(date) {
+  return date >= calendar.minDate && date <= calendar.maxDate;
+}
+
+function renderCalendar() {
+  const first = new Date(currentMonth + 'T12:00:00Z');
+  const days = [];
+  const padding = (first.getUTCDay() + 6) % 7;
+  for (let i = 0; i < padding; i++) {
+    const placeholder = makeElement('span');
+    placeholder.setAttribute('aria-hidden', 'true');
+    days.push(placeholder);
+  }
+
+  let available = false;
+  const cursor = new Date(first);
+  while (cursor.getUTCMonth() === first.getUTCMonth()) {
+    const date = isoDay(cursor);
+    const day = makeElement('button', 'date-option', cursor.getUTCDate());
+    day.type = 'button';
+    day.disabled = !withinWindow(date) || !freeDay(date);
+    day.setAttribute('aria-label', dateFormat.format(cursor) + (day.disabled ? ' · Nicht verfügbar' : ''));
+    if (!day.disabled) {
+      day.addEventListener('click', () => chooseDate(date));
+      available = true;
     }
-    select.disabled = times.length === 0;
+    days.push(day);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  elements['month-title'].textContent = monthFormat.format(first);
+  elements['previous-month'].disabled = currentMonth <= monthStart(calendar.minDate);
+  elements['next-month'].disabled = currentMonth >= monthStart(calendar.maxDate);
+  elements['calendar-days'].replaceChildren(...days);
+  elements['calendar-caption'].textContent = available
+    ? 'Dunkle Tage sind verfügbar.'
+    : 'In diesem Monat sind keine Termine frei.';
+}
+
+function showCalendar(focus = true) {
+  selectedDate = '';
+  selectedTime = '';
+  setMessage(elements['booking-error']);
+  elements['booking-heading'].textContent = 'Datum auswählen';
+  elements['calendar-step'].hidden = false;
+  elements['booking-form'].hidden = true;
+  renderCalendar();
+  if (focus) elements['booking-heading'].focus();
+}
+
+function chooseDate(date) {
+  selectedDate = date;
+  selectedTime = '';
+  pages.times = 0;
+  setMessage(elements['booking-error']);
+  elements['booking-heading'].textContent = 'Uhrzeit auswählen';
+  elements['calendar-step'].hidden = true;
+  elements['booking-form'].hidden = false;
+  setDate(elements['selected-date'], date);
+  renderTimes();
+  elements['booking-heading'].focus();
+}
+
+function updateTimeSelection() {
+  for (const button of elements['time-slots'].children) {
+    button.setAttribute('aria-pressed', String(button.value === selectedTime));
+  }
+  const submit = elements['submit-booking'];
+  submit.disabled = !selectedTime || bookingSaving;
+  submit.textContent = selectedTime ? 'Um ' + selectedTime + ' Uhr buchen' : 'Besichtigung buchen';
+}
+
+function renderTimes() {
+  const buttons = pageItems('times', calendar.days[selectedDate]).map(({ time, available }) => {
+    const button = makeElement('button', 'time-option', time);
+    button.type = 'button';
+    button.value = time;
+    button.disabled = !available;
+    button.setAttribute('aria-label', time + ' Uhr' + (available ? '' : ' · Nicht verfügbar'));
+    if (available) {
+      button.addEventListener('click', () => {
+        if (bookingSaving) return;
+        selectedTime = time;
+        setMessage(elements['booking-error']);
+        updateTimeSelection();
+      });
+    }
+    return button;
+  });
+  elements['time-slots'].replaceChildren(...buttons);
+  updateTimeSelection();
+}
+
+async function loadCalendar(preferredDate = '') {
+  const request = ++calendarRequest;
+  const status = elements['calendar-status'];
+  calendar = null;
+  elements['booking-heading'].textContent = 'Datum auswählen';
+  elements['booking-form'].hidden = true;
+  elements['calendar-step'].hidden = true;
+  elements['retry-calendar'].hidden = true;
+  status.textContent = 'Verfügbare Termine werden geladen …';
+  status.hidden = false;
+  try {
+    const params = new URLSearchParams({ listingId: selectedListing.id });
+    const data = await api('/calendar?' + params);
+    if (request !== calendarRequest) return;
+    calendar = data;
+    status.hidden = true;
+    const firstAvailable = Object.keys(data.days).sort().find(day => withinWindow(day) && freeDay(day));
+    currentMonth = monthStart(withinWindow(preferredDate) ? preferredDate : firstAvailable || data.minDate);
+    if (withinWindow(preferredDate) && freeDay(preferredDate)) chooseDate(preferredDate);
+    else showCalendar();
   } catch (error) {
-    if (request !== slotRequest || !dialog.open) return;
-    status.textContent = '';
-    if (error.status === 401) expireSession();
-    else setMessage(elements['booking-error'], error.message);
+    if (request !== calendarRequest) return;
+    status.hidden = true;
+    if (error.status === 401) {
+      expireSession();
+    } else if (error.status === 404) {
+      closeBooking();
+      setMessage(elements.message, error.message);
+      loadData();
+    } else {
+      setMessage(elements['booking-error'], error.status ? error.message : 'Termine konnten nicht geladen werden.');
+      elements['retry-calendar'].hidden = false;
+    }
   }
 }
 
-function prepareBooking(listing) {
-  if (!bookingWindow) return;
-  selectedListingId = listing.id;
-  elements['confirm-title'].textContent = listing.title;
-  const input = elements['booking-date'];
-  input.min = bookingWindow.minDate;
-  input.max = bookingWindow.maxDate;
-  input.value = bookingWindow.minDate;
+function openBooking(listing) {
+  if (bookingSaving) return;
+  selectedListing = listing;
+  elements['booking-listing'].textContent = listing.title;
+  setMessage(elements.message);
   setMessage(elements['booking-error']);
-  elements['confirm-booking'].showModal();
-  refreshSlots();
+  showPanel(true);
+  loadCalendar();
+}
+
+function closeBooking(focus = true) {
+  if (!selectedListing) return;
+  const listingId = selectedListing.id;
+  selectedListing = null;
+  calendarRequest += 1;
+  showPanel();
+  if (focus) document.getElementById('objekt-' + listingId)?.querySelector('button')?.focus();
+}
+
+function changeMonth(offset) {
+  const month = offsetMonth(currentMonth, offset);
+  if (month < monthStart(calendar.minDate) || month > monthStart(calendar.maxDate)) return;
+  currentMonth = month;
+  renderCalendar();
 }
 
 elements['reload'].addEventListener('click', start);
@@ -316,12 +479,11 @@ elements['auth-form'].addEventListener('submit', async event => {
   setMessage(elements['auth-error']);
   setMessage(elements.message);
   try {
-    const session = await post(registering ? '/register' : '/login', {
-      email: elements.email.value.trim(),
-      password: elements.password.value,
-    });
+    const credentials = { email: elements.email.value.trim(), password: elements.password.value };
+    if (registering) credentials.phone = elements.phone.value.trim();
+    const session = await post(registering ? '/register' : '/login', credentials);
     showSession(session.user);
-    elements['application-title'].focus();
+    showPanel(true);
     await loadData();
   } catch (error) {
     setMessage(elements['auth-error'], error.status ? error.message : 'Die Verbindung ist fehlgeschlagen. Bitte versuchen Sie es erneut.');
@@ -346,58 +508,85 @@ elements.logout.addEventListener('click', async () => {
     elements.logout.disabled = false;
   }
 });
-elements['cancel-booking'].addEventListener('click', () => elements['confirm-booking'].close());
-elements['confirm-booking'].addEventListener('cancel', event => {
-  if (elements['cancel-booking'].disabled) event.preventDefault();
+for (const name of Object.keys(pages)) {
+  const pager = elements[name + '-pager'];
+  pager.addEventListener('click', event => {
+    const direction = event.target.dataset.page;
+    if (!direction || (name === 'times' && bookingSaving)) return;
+    pages[name] += direction === 'next' ? 1 : -1;
+    if (name === 'times') renderTimes();
+    else renderData();
+  });
+}
+compact.addEventListener('change', () => {
+  const index = listings.findIndex(listing => listing.id === elements.listings.firstElementChild?.id.slice(7));
+  if (index !== -1) pages.catalog = Math.floor(index / pageSize('catalog'));
+  renderData();
 });
-elements['booking-date'].addEventListener('input', () => {
+
+elements['cancel-booking'].addEventListener('click', () => closeBooking());
+elements['change-date'].addEventListener('click', () => showCalendar());
+elements['retry-calendar'].addEventListener('click', () => {
   setMessage(elements['booking-error']);
-  refreshSlots();
+  loadCalendar();
 });
-elements['booking-time'].addEventListener('change', () => {
-  elements['submit-booking'].disabled = !elements['booking-time'].value;
-});
+elements['previous-month'].addEventListener('click', () => changeMonth(-1));
+elements['next-month'].addEventListener('click', () => changeMonth(1));
 elements['booking-form'].addEventListener('submit', async event => {
   event.preventDefault();
-  const input = elements['booking-date'];
-  const select = elements['booking-time'];
-  const submit = elements['submit-booking'];
-  if (submit.disabled || !selectedListingId || !input.validity.valid || !select.value) return;
-  const selection = { listingId: selectedListingId, visitDate: input.value, visitTime: select.value };
-  submit.disabled = true;
+  if (!selectedListing || !selectedTime || bookingSaving) return;
+
+  const bookingUser = user;
+  const listingId = selectedListing.id;
+  bookingSaving = true;
   elements['cancel-booking'].disabled = true;
-  input.disabled = true;
-  select.disabled = true;
+  elements['change-date'].disabled = true;
+  elements.logout.disabled = true;
+  updateTimeSelection();
   setMessage(elements['booking-error']);
-  setMessage(elements.message);
   try {
-    const { booking } = await post('/bookings', selection);
+    const { booking } = await post('/bookings', {
+      listingId,
+      visitDate: selectedDate,
+      visitTime: selectedTime,
+    });
+    if (user !== bookingUser) return;
+    const bookingScreenOpen = selectedListing?.id === listingId;
     bookings = [booking, ...bookings];
-    elements['confirm-booking'].close();
+    pages.bookings = 0;
+    if (bookingScreenOpen) closeBooking(false);
     renderData();
     setMessage(elements.message, 'Ihre Besichtigung wurde gebucht.', 'success');
-    if (location.hash !== '#buchungen') location.hash = '#buchungen';
-    else showPanel(true);
+    if (bookingScreenOpen && location.hash !== '#buchungen') location.hash = '#buchungen';
+    else if (bookingScreenOpen) showPanel(true);
   } catch (error) {
+    if (!selectedListing) return;
     if (error.status === 401) {
       expireSession();
-    } else if (error.status === 409) {
-      setMessage(elements['booking-error'], error.message);
-      await refreshSlots();
-    } else if (error.status === 404 || error.status === 422) {
-      elements['confirm-booking'].close();
+    } else if (error.status === 404) {
+      closeBooking();
       setMessage(elements.message, error.message);
       await loadData();
     } else {
-      setMessage(elements['booking-error'], error.status ? error.message : 'Die Verbindung ist fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      if (error.status === 409) {
+        const preferredDate = selectedDate;
+        await loadCalendar(preferredDate);
+      }
+      if (selectedListing) {
+        setMessage(elements['booking-error'], error.status ? error.message : 'Die Verbindung ist fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      }
     }
   } finally {
+    bookingSaving = false;
     elements['cancel-booking'].disabled = false;
-    input.disabled = false;
-    if (select.value) select.disabled = false;
-    submit.disabled = !select.value;
+    elements['change-date'].disabled = false;
+    elements.logout.disabled = false;
+    updateTimeSelection();
   }
 });
-window.addEventListener('hashchange', () => showPanel(true));
+window.addEventListener('hashchange', () => {
+  closeBooking(false);
+  showPanel(true);
+});
 
 start();

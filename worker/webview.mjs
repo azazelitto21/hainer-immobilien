@@ -164,6 +164,7 @@ async function authenticate(request, db, action, oldTokenHash) {
 }
 
 async function webviewListings(db) {
+  await ensureOriginalListing(db);
   const { results } = await db.prepare(`SELECT id, title, location, rent_cents, area, rooms, description, photo_key
     FROM rental_listings WHERE is_active = 1 ORDER BY created_at DESC, id DESC`).all();
   return apiJson({

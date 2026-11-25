@@ -23,5 +23,5 @@ optionale Titelbilder in R2.
 Unter `/webview` können sich Besucher mit E-Mail-Adresse und Passwort
 registrieren, aktive Objekte ansehen und eigene Besichtigungen buchen. Der
 Termin liegt drei Kalendertage nach dem aktuellen Datum in Köln. Das bisherige
-Exposé für die Südstadt erscheint nach der Aktivierung durch die Verwaltung in
-der Web-App. Die Web-App benötigt den Worker und die D1-Migrationen.
+Exposé für die Südstadt wird als Testobjekt angelegt und kann in der Verwaltung
+deaktiviert werden. Die Web-App benötigt den Worker und die D1-Migrationen.

@@ -168,9 +168,9 @@ async function adminDashboard(url, env) {
 async function ensureOriginalListing(db) {
   if (await db.prepare('SELECT 1 FROM rental_listings WHERE id = ?').bind(originalListingId).first()) return;
   await db.prepare(`INSERT INTO rental_listings (id, title, location, rent_cents, area, rooms, description, is_active)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 0) ON CONFLICT(id) DO NOTHING`).bind(
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1) ON CONFLICT(id) DO NOTHING`).bind(
     originalListingId, '1-Zimmer-Wohnung in Köln-Südstadt', '50678 Köln · Südstadt / Severinsviertel',
-    73000, 38, 1, 'Einzimmerwohnung im Kölner Severinsviertel mit Einbauküche und Balkon.',
+    73000, 38, 1, 'Testobjekt für Probebuchungen. Einzimmerwohnung im Kölner Severinsviertel mit Einbauküche und Balkon.',
   ).run();
 }
 
@@ -378,6 +378,7 @@ export default {
     if (path === '/' || path === '/index.html') {
       const home = staticText('/index.html');
       try {
+        await ensureOriginalListing(env.DB);
         const listings = await env.DB.prepare(
           'SELECT id, title, location, rent_cents, area, photo_key FROM rental_listings WHERE is_active = 1 ORDER BY created_at DESC, id DESC',
         ).all();

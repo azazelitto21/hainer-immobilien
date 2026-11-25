@@ -13,11 +13,12 @@ let user = null;
 let registering = false;
 let loadingData = false;
 let dataRequest = 0;
-let visitDate = '';
+let bookingWindow = null;
 let listings = [];
 let bookings = [];
 let initialListingPending = Boolean(initialListing);
-let selectedBooking = null;
+let selectedListingId = null;
+let slotRequest = 0;
 
 class ApiError extends Error {
   constructor(message, status) {
@@ -64,13 +65,10 @@ function sameOriginPath(value) {
   return url.href;
 }
 
-function setDate(element, date) {
-  element.dateTime = date;
-  element.textContent = dateFormat.format(new Date(date + 'T12:00:00Z'));
-}
-
-function ownBooking(listingId) {
-  return bookings.some(booking => booking.listing_id === listingId && booking.visit_date === visitDate);
+function setDate(element, date, time) {
+  element.dateTime = time ? date + 'T' + time : date;
+  const day = dateFormat.format(new Date(date + 'T12:00:00Z'));
+  element.textContent = time ? day + ' · ' + time + ' Uhr' : day;
 }
 
 function propertyCard(listing) {
@@ -103,14 +101,10 @@ function propertyCard(listing) {
   }
 
   const actions = makeElement('div', 'property-actions');
-  const booked = ownBooking(listing.id);
-  const button = makeElement('button', 'button button-primary', booked ? 'Bereits gebucht' : 'Besichtigung buchen');
+  const button = makeElement('button', 'button button-primary', 'Besichtigung buchen');
   button.type = 'button';
-  button.disabled = booked;
-  if (!booked) {
-    button.setAttribute('aria-label', 'Besichtigung buchen für ' + listing.title);
-    button.addEventListener('click', () => prepareBooking(listing));
-  }
+  button.setAttribute('aria-label', 'Besichtigung buchen für ' + listing.title);
+  button.addEventListener('click', () => prepareBooking(listing));
   actions.append(button);
   const detail = sameOriginPath(listing.detail_url);
   if (detail) {
@@ -131,7 +125,7 @@ function bookingItem(booking) {
     makeElement('p', 'property-location', booking.location),
   );
   const date = makeElement('time');
-  setDate(date, booking.visit_date);
+  setDate(date, booking.visit_date, booking.visit_time);
   item.append(info, date);
   return item;
 }
@@ -142,7 +136,7 @@ function renderData() {
   elements['catalog-empty'].hidden = listings.length > 0;
   elements['bookings-empty'].hidden = bookings.length > 0;
   elements['catalog-date'].hidden = false;
-  setDate(elements['visit-date'], visitDate);
+  setDate(elements['visit-date'], bookingWindow.minDate);
 
   if (initialListingPending && location.hash !== '#buchungen') {
     const card = document.getElementById('objekt-' + initialListing);
@@ -184,7 +178,7 @@ function showSession(nextUser) {
   user = nextUser;
   dataRequest += 1;
   loadingData = false;
-  visitDate = '';
+  bookingWindow = null;
   listings = [];
   bookings = [];
   elements.listings.replaceChildren();
@@ -221,7 +215,7 @@ async function loadData() {
   try {
     const [available, personal] = await Promise.all([api('/listings'), api('/bookings')]);
     if (request !== dataRequest) return;
-    visitDate = available.visitDate;
+    bookingWindow = { minDate: available.minDate, maxDate: available.maxDate };
     listings = available.listings;
     bookings = personal.bookings;
     renderData();
@@ -254,13 +248,53 @@ async function start() {
   }
 }
 
+async function refreshSlots() {
+  const dialog = elements['confirm-booking'];
+  const input = elements['booking-date'];
+  const select = elements['booking-time'];
+  const status = elements['slot-status'];
+  const request = ++slotRequest;
+  const placeholder = makeElement('option', '', 'Uhrzeit auswählen');
+  placeholder.value = '';
+  select.replaceChildren(placeholder);
+  select.disabled = true;
+  elements['submit-booking'].disabled = true;
+  status.textContent = '';
+  if (!input.value || !input.validity.valid) return;
+
+  status.textContent = 'Freie Zeiten werden geladen …';
+  try {
+    const query = new URLSearchParams({ listingId: selectedListingId, visitDate: input.value });
+    const { times, alreadyBooked } = await api('/availability?' + query);
+    if (request !== slotRequest || !dialog.open) return;
+    status.textContent = alreadyBooked
+      ? 'Sie haben dieses Objekt an diesem Tag bereits gebucht.'
+      : times.length ? '' : 'An diesem Tag sind keine Termine frei.';
+    for (const time of times) {
+      const option = makeElement('option', '', time + ' Uhr');
+      option.value = time;
+      select.append(option);
+    }
+    select.disabled = times.length === 0;
+  } catch (error) {
+    if (request !== slotRequest || !dialog.open) return;
+    status.textContent = '';
+    if (error.status === 401) expireSession();
+    else setMessage(elements['booking-error'], error.message);
+  }
+}
+
 function prepareBooking(listing) {
-  if (!visitDate || ownBooking(listing.id)) return;
-  selectedBooking = { listingId: listing.id, visitDate };
+  if (!bookingWindow) return;
+  selectedListingId = listing.id;
   elements['confirm-title'].textContent = listing.title;
-  setDate(elements['confirm-date'], visitDate);
+  const input = elements['booking-date'];
+  input.min = bookingWindow.minDate;
+  input.max = bookingWindow.maxDate;
+  input.value = bookingWindow.minDate;
   setMessage(elements['booking-error']);
   elements['confirm-booking'].showModal();
+  refreshSlots();
 }
 
 elements['reload'].addEventListener('click', start);
@@ -314,19 +348,30 @@ elements.logout.addEventListener('click', async () => {
 });
 elements['cancel-booking'].addEventListener('click', () => elements['confirm-booking'].close());
 elements['confirm-booking'].addEventListener('cancel', event => {
-  if (elements['submit-booking'].disabled) event.preventDefault();
+  if (elements['cancel-booking'].disabled) event.preventDefault();
+});
+elements['booking-date'].addEventListener('input', () => {
+  setMessage(elements['booking-error']);
+  refreshSlots();
+});
+elements['booking-time'].addEventListener('change', () => {
+  elements['submit-booking'].disabled = !elements['booking-time'].value;
 });
 elements['booking-form'].addEventListener('submit', async event => {
   event.preventDefault();
-  if (!selectedBooking) return;
-
+  const input = elements['booking-date'];
+  const select = elements['booking-time'];
   const submit = elements['submit-booking'];
+  if (submit.disabled || !selectedListingId || !input.validity.valid || !select.value) return;
+  const selection = { listingId: selectedListingId, visitDate: input.value, visitTime: select.value };
   submit.disabled = true;
   elements['cancel-booking'].disabled = true;
+  input.disabled = true;
+  select.disabled = true;
   setMessage(elements['booking-error']);
   setMessage(elements.message);
   try {
-    const { booking } = await post('/bookings', selectedBooking);
+    const { booking } = await post('/bookings', selection);
     bookings = [booking, ...bookings];
     elements['confirm-booking'].close();
     renderData();
@@ -336,7 +381,10 @@ elements['booking-form'].addEventListener('submit', async event => {
   } catch (error) {
     if (error.status === 401) {
       expireSession();
-    } else if (error.status === 404 || error.status === 409) {
+    } else if (error.status === 409) {
+      setMessage(elements['booking-error'], error.message);
+      await refreshSlots();
+    } else if (error.status === 404 || error.status === 422) {
       elements['confirm-booking'].close();
       setMessage(elements.message, error.message);
       await loadData();
@@ -344,8 +392,10 @@ elements['booking-form'].addEventListener('submit', async event => {
       setMessage(elements['booking-error'], error.status ? error.message : 'Die Verbindung ist fehlgeschlagen. Bitte versuchen Sie es erneut.');
     }
   } finally {
-    submit.disabled = false;
     elements['cancel-booking'].disabled = false;
+    input.disabled = false;
+    if (select.value) select.disabled = false;
+    submit.disabled = !select.value;
   }
 });
 window.addEventListener('hashchange', () => showPanel(true));

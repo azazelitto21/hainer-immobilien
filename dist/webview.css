@@ -176,6 +176,33 @@ dialog {
 }
 dialog::backdrop { background: #14273bb0; }
 .confirm-title { margin-top: .65rem; font-weight: 700; overflow-wrap: anywhere; }
+.booking-fields { display: grid; gap: .4rem; margin-top: 1rem; }
+.booking-fields label { font-weight: 650; }
+.booking-fields label:not(:first-child) { margin-top: .4rem; }
+.booking-fields input, .booking-fields select {
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.8rem;
+  padding: .55rem .7rem;
+  border: 1px solid #8794a0;
+  border-radius: .5rem;
+  background-color: #fff;
+  color: inherit;
+  font: inherit;
+}
+.booking-fields input { appearance: auto; }
+.booking-fields select {
+  padding-right: 2rem;
+  background-image: linear-gradient(45deg, transparent 50%, #455565 50%), linear-gradient(135deg, #455565 50%, transparent 50%);
+  background-position: right 1.05rem center, right .75rem center;
+  background-size: .3rem .3rem;
+  background-repeat: no-repeat;
+}
+.slot-status { margin: .15rem 0 0; font-size: .9rem; }
+.slot-status:empty { display: none; }
+.dialog-actions button:disabled { cursor: default; opacity: .55; }
 .dialog-actions { display: flex; flex-wrap: wrap; justify-content: end; gap: .65rem; margin-top: 1.35rem; }
 .dialog-actions .button { flex: 1; }
 

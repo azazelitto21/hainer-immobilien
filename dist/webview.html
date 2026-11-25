@@ -7,8 +7,8 @@
   <meta name="robots" content="noindex">
   <title>Besichtigungen · Wohnungsdatenbank Köln</title>
   <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/webview.css">
-  <script src="/webview.js" defer></script>
+  <link rel="stylesheet" href="/webview.css?v=2">
+  <script src="/webview.js?v=2" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -73,7 +73,7 @@
       <section id="catalog-panel" class="app-section" aria-labelledby="catalog-heading">
         <div class="section-heading">
           <h2 id="catalog-heading" tabindex="-1">Verfügbare Objekte</h2>
-          <p id="catalog-date" class="catalog-date" hidden>Besichtigung am <time id="visit-date"></time></p>
+          <p id="catalog-date" class="catalog-date" hidden>Termine ab <time id="visit-date"></time></p>
         </div>
         <p id="catalog-empty" class="empty-state" role="status" hidden>Zurzeit sind keine Objekte für eine Besichtigung verfügbar.</p>
         <div id="listings" class="listings"></div>
@@ -95,11 +95,19 @@
     <form id="booking-form">
       <h2 id="confirm-heading">Besichtigung buchen</h2>
       <p id="confirm-title" class="confirm-title"></p>
-      <p>Besichtigung am <time id="confirm-date"></time></p>
+      <div class="booking-fields">
+        <label for="booking-date">Datum</label>
+        <input id="booking-date" type="date" required>
+        <label for="booking-time">Uhrzeit in Köln</label>
+        <select id="booking-time" aria-describedby="slot-status" required disabled>
+          <option value="">Uhrzeit auswählen</option>
+        </select>
+        <p id="slot-status" class="slot-status" role="status"></p>
+      </div>
       <p id="booking-error" class="message error" role="alert" hidden></p>
       <div class="dialog-actions">
         <button id="cancel-booking" class="button button-secondary" type="button">Abbrechen</button>
-        <button id="submit-booking" class="button button-primary" type="submit">Verbindlich buchen</button>
+        <button id="submit-booking" class="button button-primary" type="submit" disabled>Verbindlich buchen</button>
       </div>
     </form>
   </dialog>
